@@ -11,12 +11,12 @@ const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/property-estimator-site">
       <Auth0Provider
         domain={auth0Domain}
         clientId={auth0ClientId}
         authorizationParams={{
-          redirect_uri: window.location.origin,
+          redirect_uri: window.location.origin + '/property-estimator-site',
           audience: auth0Audience,
         }}
       >
