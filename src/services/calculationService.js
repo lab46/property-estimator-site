@@ -32,13 +32,17 @@ export function calculatePropertyInvestment(propertyData) {
       
       // Rental Details
       weeklyRent,
+      weeksRented = 52,
       
-      // Annual Expenses
-      propertyManagementFee = 0, // Annual fee or percentage
-      councilRates = 0,
-      waterRates = 0,
-      insurance = 0,
-      maintenanceCosts = 0,
+      // Monthly Expenses (from form)
+      councilRatesMonthly = 0,
+      waterRatesMonthly = 0,
+      insuranceMonthly = 0,
+      maintenanceMonthly = 0,
+      emergencyServicesLevyMonthly = 0,
+      landTaxMonthly = 0,
+      wealthFeeMonthly = 0,
+      strataMonthly = 0,
       
       // Growth Assumptions
       capitalGrowthRate = 5, // % per year
@@ -62,13 +66,19 @@ export function calculatePropertyInvestment(propertyData) {
     const totalUpfrontCosts = depositAmount + stampDuty.total + additionalUpfrontCosts;
 
     // Calculate annual values
-    const annualRent = weeklyRent * 52;
+    const annualRent = weeklyRent * weeksRented;
+    
+    // Convert monthly expenses to annual
     const annualExpenses = {
-      propertyManagement: propertyManagementFee,
-      councilRates,
-      waterRates,
-      insurance,
-      maintenance: maintenanceCosts,
+      propertyManagement: 0, // Not used, calculated from percentage if needed
+      councilRates: councilRatesMonthly * 12,
+      waterRates: waterRatesMonthly * 12,
+      insurance: insuranceMonthly * 12,
+      maintenance: maintenanceMonthly * 12,
+      emergencyServicesLevy: emergencyServicesLevyMonthly * 12,
+      landTax: landTaxMonthly * 12,
+      wealthFee: wealthFeeMonthly * 12,
+      strata: strataMonthly * 12,
     };
 
     // Calculate cash flow
@@ -97,13 +107,17 @@ export function calculatePropertyInvestment(propertyData) {
     const investmentMetrics = calculateInvestmentMetrics(projection, totalUpfrontCosts);
 
     // Calculate year-by-year breakdown
+    const totalMonthlyExpenses = councilRatesMonthly + waterRatesMonthly + insuranceMonthly + 
+                                  maintenanceMonthly + emergencyServicesLevyMonthly + 
+                                  landTaxMonthly + wealthFeeMonthly + strataMonthly;
+    
     const yearByYear = calculateYearByYear({
       purchasePrice,
       loanAmount,
       interestRate,
       loanTerm,
-      initialMonthlyRent: weeklyRent * 52 / 12,
-      monthlyExpenses: Object.values(annualExpenses).reduce((sum, val) => sum + val, 0) / 12,
+      initialMonthlyRent: weeklyRent * weeksRented / 12,
+      monthlyExpenses: totalMonthlyExpenses,
       capitalGrowthRate,
       rentalGrowthRate,
     });
