@@ -17,9 +17,15 @@ export function calculateYearByYear({
   const totalPayments = loanTerm * 12;
   
   // Calculate monthly loan payment (principal + interest)
-  const monthlyPayment = loanAmount * 
-    (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, totalPayments)) / 
-    (Math.pow(1 + monthlyInterestRate, totalPayments) - 1);
+  let monthlyPayment;
+  if (monthlyInterestRate === 0) {
+    // If interest rate is 0, simple division
+    monthlyPayment = loanAmount / totalPayments;
+  } else {
+    monthlyPayment = loanAmount * 
+      (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, totalPayments)) / 
+      (Math.pow(1 + monthlyInterestRate, totalPayments) - 1);
+  }
 
   let remainingBalance = loanAmount;
   let currentPropertyValue = purchasePrice;

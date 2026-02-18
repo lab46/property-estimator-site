@@ -29,19 +29,19 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
       const propertyData = {
         name: `Property - ${new Date().toLocaleDateString()}`,
         address: '',
-        state: results.state || 'NSW',
-        purchasePrice: results.purchasePrice,
-        deposit: results.deposit,
+        state: results.stampDuty?.state || 'NSW',
+        purchasePrice: results.summary.purchasePrice,
+        deposit: results.summary.depositAmount,
         interestRate: results.loanDetails.annualInterestRate,
         loanTerm: results.loanDetails.loanTermYears,
-        weeklyRent: results.annualRent / 52,
-        propertyManagementFee: results.annualExpenses.breakdown?.propertyManagement 
-          ? (results.annualExpenses.breakdown.propertyManagement / results.annualRent) * 100 
+        weeklyRent: results.cashFlow.income.weekly,weekly,
+        propertyManagementFee: results.cashFlow.costs.breakdown?.propertyManagement 
+          ? (results.cashFlow.costs.breakdown.propertyManagement / results.cashFlow.income.annual) * 100 
           : 0,
-        councilRates: results.annualExpenses.breakdown?.councilRates || 0,
-        waterRates: results.annualExpenses.breakdown?.waterRates || 0,
-        insurance: results.annualExpenses.breakdown?.insurance || 0,
-        maintenance: results.annualExpenses.breakdown?.maintenance || 0,
+        councilRates: results.cashFlow.costs.breakdown?.councilRates || 0,
+        waterRates: results.cashFlow.costs.breakdown?.waterRates || 0,
+        insurance: results.cashFlow.costs.breakdown?.insurance || 0,
+        maintenance: results.cashFlow.costs.breakdown?.maintenance || 0,
         capitalGrowthRate: 5,
         rentalGrowthRate: 3,
         isFirstHome: results.stampDuty?.isFirstHome || false,
@@ -110,7 +110,7 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
         <div className="card bg-primary-50">
           <div className="text-sm text-gray-600 mb-1">Purchase Price</div>
           <div className="text-2xl font-bold text-primary-600">
-            {formatCurrency(results.purchasePrice)}
+            {formatCurrency(results.summary.purchasePrice)}
           </div>
         </div>
 
@@ -147,23 +147,23 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-gray-600">Purchase Price</span>
-            <span className="font-semibold">{formatCurrency(results.purchasePrice)}</span>
+            <span className="font-semibold">{formatCurrency(results.summary.purchasePrice)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Stamp Duty</span>
             <span className="font-semibold">{formatCurrency(results.stampDuty?.total || 0)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Legal Fees (estimate)</span>
-            <span className="font-semibold">{formatCurrency(results.legalFees)}</span>
+            <span className="text-gray-600">Additional Costs</span>
+            <span className="font-semibold">{formatCurrency(results.summary.additionalCosts)}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Your Deposit</span>
-            <span className="font-semibold text-red-600">-{formatCurrency(results.deposit)}</span>
+            <span className="font-semibold text-red-600">-{formatCurrency(results.summary.depositAmount)}</span>
           </div>
           <div className="border-t pt-3 flex justify-between text-lg">
             <span className="font-bold">Total Upfront (excl. deposit)</span>
-            <span className="font-bold">{formatCurrency(results.totalUpfrontCosts - results.purchasePrice)}</span>
+            <span className="font-bold">{formatCurrency(results.summary.stampDuty + results.summary.additionalCosts)}</span>
           </div>
         </div>
       </div>
@@ -175,7 +175,7 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Loan Amount</span>
-              <span className="font-semibold">{formatCurrency(results.loanAmount)}</span>
+              <span className="font-semibold">{formatCurrency(results.summary.loanAmount)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Interest Rate</span>
@@ -184,6 +184,10 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
             <div className="flex justify-between">
               <span className="text-gray-600">Loan Term</span>
               <span className="font-semibold">{results.loanDetails.loanTermYears} years</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">LVR</span>
+              <span className="font-semibold">{formatPercent(results.loanDetails.lvr)}</span>
             </div>
           </div>
           <div className="space-y-3">
@@ -202,6 +206,83 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
           </div>
         </div>
       </div>
+
+      {/* Equity Milestones */}
+      {results.projection && (() => {
+        const equityMatchYear = results.projection.find(p => p.remainingLoan !== undefined && p.equity >= p.remainingLoan);
+        const usableEquityMatchYear = results.projection.find(p => p.remainingLoan !== undefined && (p.equity * 0.8) >= p.remainingLoan);
+        
+        return (equityMatchYear || usableEquityMatchYear) ? (
+          <div className="card bg-green-50 border-2 border-green-200">
+            <h2 className="text-xl font-bold mb-4 text-green-800">🎯 Equity Milestones</h2>
+            <div className="space-y-4">
+              {usableEquityMatchYear && (
+                <div className="bg-white rounded-lg p-4 border border-green-300">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">💰</span>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-green-800 mb-2">Usable Equity Matches Remaining Loan</h3>
+                      <p className="text-sm text-gray-700 mb-3">
+                        By <span className="font-bold text-green-700">Year {usableEquityMatchYear.year}</span>, your usable equity (80% of total equity) will match or exceed your remaining loan balance.
+                      </p>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <div className="text-gray-600">Property Value</div>
+                          <div className="font-semibold">{formatCurrency(usableEquityMatchYear.propertyValue)}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-600">Total Equity</div>
+                          <div className="font-semibold">{formatCurrency(usableEquityMatchYear.equity)}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-600">Usable Equity (80%)</div>
+                          <div className="font-bold text-green-700">{formatCurrency(usableEquityMatchYear.equity * 0.8)}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-600">Remaining Loan</div>
+                          <div className="font-semibold">{formatCurrency(usableEquityMatchYear.remainingLoan)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {equityMatchYear && (
+                <div className="bg-white rounded-lg p-4 border border-green-300">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🏆</span>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-green-800 mb-2">Full Equity Matches Remaining Loan</h3>
+                      <p className="text-sm text-gray-700 mb-3">
+                        By <span className="font-bold text-green-700">Year {equityMatchYear.year}</span>, your total equity will match or exceed your remaining loan balance.
+                      </p>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <div className="text-gray-600">Property Value</div>
+                          <div className="font-semibold">{formatCurrency(equityMatchYear.propertyValue)}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-600">Total Equity</div>
+                          <div className="font-bold text-green-700">{formatCurrency(equityMatchYear.equity)}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-600">Equity Percentage</div>
+                          <div className="font-semibold">{equityMatchYear.equityPercentage}%</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-600">Remaining Loan</div>
+                          <div className="font-semibold">{formatCurrency(equityMatchYear.remainingLoan)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null;
+      })()}
 
       {/* Cash Flow Breakdown */}
       <div className="card">
@@ -324,41 +405,89 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
       )}
 
       {/* Key Milestones */}
-      {results.projection && (
-        <div className="card">
-          <h2 className="text-xl font-bold mb-4">Key Investment Milestones</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[10, 20, 30].map(year => {
-              const milestone = results.projection[year];
-              return milestone ? (
-                <div key={year} className="border rounded-lg p-4">
-                  <h3 className="font-bold text-lg mb-3">Year {year}</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Property Value</span>
-                      <span className="font-semibold">{formatCurrency(milestone.propertyValue)}</span>
+      {/* Key Milestones */}
+      {results.projection && (() => {
+        return (
+          <div className="card">
+            <h2 className="text-xl font-bold mb-4">Key Investment Milestones</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[10, 20, 30].map(year => {
+                const milestone = results.projection[year];
+                if (!milestone) return null;
+                
+                const usableEquity = milestone.equity * 0.8;
+                const remainingLoan = milestone.remainingLoan || 0;
+                const equityExceedsLoan = remainingLoan > 0 && milestone.equity >= remainingLoan;
+                const usableEquityExceedsLoan = remainingLoan > 0 && usableEquity >= remainingLoan;
+                return (
+                  <div 
+                    key={year} 
+                    className={`border rounded-lg p-4 ${
+                      usableEquityExceedsLoan 
+                        ? 'bg-green-50 border-green-300 border-2' 
+                        : equityExceedsLoan 
+                          ? 'bg-blue-50 border-blue-300 border-2' 
+                          : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-bold text-lg">Year {year}</h3>
+                      {usableEquityExceedsLoan && (
+                        <span className="text-xl" title="Usable equity exceeds loan">💰</span>
+                      )}
+                      {!usableEquityExceedsLoan && equityExceedsLoan && (
+                        <span className="text-xl" title="Total equity exceeds loan">🏆</span>
+                      )}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Equity</span>
-                      <span className="font-semibold">{formatCurrency(milestone.equity)}</span>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Property Value</span>
+                        <span className="font-semibold">{formatCurrency(milestone.propertyValue)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Equity</span>
+                        <span className={`font-semibold ${equityExceedsLoan ? 'text-green-700' : ''}`}>
+                          {formatCurrency(milestone.equity)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Usable Equity (80%)</span>
+                        <span className={`font-semibold ${usableEquityExceedsLoan ? 'text-green-700' : ''}`}>
+                          {formatCurrency(usableEquity)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Equity %</span>
+                        <span className="font-semibold">{milestone.equityPercentage}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Remaining Loan</span>
+                        <span className="font-semibold">{formatCurrency(remainingLoan)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Cumulative Cash Flow</span>
+                        <span className={`font-semibold ${milestone.cumulativeCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(milestone.cumulativeCashFlow)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Equity %</span>
-                      <span className="font-semibold">{milestone.equityPercentage}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Cumulative Cash Flow</span>
-                      <span className={`font-semibold ${milestone.cumulativeCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatCurrency(milestone.cumulativeCashFlow)}
-                      </span>
-                    </div>
+                    {usableEquityExceedsLoan && (
+                      <div className="mt-3 pt-3 border-t border-green-300 text-xs text-green-800 font-medium">
+                        ✓ Usable equity covers remaining loan
+                      </div>
+                    )}
+                    {!usableEquityExceedsLoan && equityExceedsLoan && (
+                      <div className="mt-3 pt-3 border-t border-blue-300 text-xs text-blue-800 font-medium">
+                        ✓ Total equity covers remaining loan
+                      </div>
+                    )}
                   </div>
-                </div>
-              ) : null;
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Year-by-Year Analysis */}
       {results.yearByYear && (

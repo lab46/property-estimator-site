@@ -43,6 +43,7 @@ export function calculatePropertyInvestment(propertyData) {
       landTaxMonthly = 0,
       wealthFeeMonthly = 0,
       strataMonthly = 0,
+      propertyManagementFee = 0, // as percentage
       
       // Growth Assumptions
       capitalGrowthRate = 5, // % per year
@@ -68,9 +69,12 @@ export function calculatePropertyInvestment(propertyData) {
     // Calculate annual values
     const annualRent = weeklyRent * weeksRented;
     
+    // Calculate property management fee as percentage of annual rent
+    const propertyManagementAnnual = (annualRent * propertyManagementFee) / 100;
+    
     // Convert monthly expenses to annual
     const annualExpenses = {
-      propertyManagement: 0, // Not used, calculated from percentage if needed
+      propertyManagement: propertyManagementAnnual,
       councilRates: councilRatesMonthly * 12,
       waterRates: waterRatesMonthly * 12,
       insurance: insuranceMonthly * 12,
@@ -107,16 +111,20 @@ export function calculatePropertyInvestment(propertyData) {
     const investmentMetrics = calculateInvestmentMetrics(projection, totalUpfrontCosts);
 
     // Calculate year-by-year breakdown
-    const totalMonthlyExpenses = councilRatesMonthly + waterRatesMonthly + insuranceMonthly + 
+    const propertyManagementMonthly = propertyManagementAnnual / 12;
+    const totalMonthlyExpenses = propertyManagementMonthly + councilRatesMonthly + waterRatesMonthly + insuranceMonthly + 
                                   maintenanceMonthly + emergencyServicesLevyMonthly + 
                                   landTaxMonthly + wealthFeeMonthly + strataMonthly;
+    
+    // Calculate monthly rent from weekly rent and weeks rented
+    const monthlyRent = (weeklyRent * weeksRented) / 12;
     
     const yearByYear = calculateYearByYear({
       purchasePrice,
       loanAmount,
       interestRate,
       loanTerm,
-      initialMonthlyRent: weeklyRent * weeksRented / 12,
+      initialMonthlyRent: monthlyRent,
       monthlyExpenses: totalMonthlyExpenses,
       capitalGrowthRate,
       rentalGrowthRate,
@@ -124,54 +132,49 @@ export function calculatePropertyInvestment(propertyData) {
 
     // Return comprehensive results
     return {
-      success: true,
-      data: {
-        // Summary
-        summary: {
-          purchasePrice,
-          depositAmount,
-          loanAmount,
-          totalUpfrontCosts,
-          stampDuty: stampDuty.total,
-          additionalCosts: additionalUpfrontCosts,
-        },
-
-        // Stamp Duty
-        stampDuty,
-
-        // Loan Details
-        loanDetails: {
-          ...loanDetails,
-          ...lvrDetails,
-        },
-
-        // Cash Flow
-        cashFlow,
-
-        // Rental Yields
-        yields: {
-          gross: grossYield,
-          net: netYield,
-        },
-
-        // Investment Metrics
-        investmentMetrics,
-
-        // 30-Year Projection
-        projection,
-
-        // Year-by-Year Details
-        yearByYear,
-
-        // Input Parameters
-        inputs: propertyData,
+      // Summary
+      summary: {
+        purchasePrice,
+        depositAmount,
+        loanAmount,
+        totalUpfrontCosts,
+        stampDuty: stampDuty.total,
+        additionalCosts: additionalUpfrontCosts,
       },
+
+      // Stamp Duty
+      stampDuty,
+
+      // Loan Details
+      loanDetails: {
+        ...loanDetails,
+        ...lvrDetails,
+      },
+
+      // Cash Flow
+      cashFlow,
+
+      // Rental Yields
+      yields: {
+        gross: grossYield,
+        net: netYield,
+      },
+
+      // Investment Metrics
+      investmentMetrics,
+
+      // 30-Year Projection
+      projection,
+
+      // Year-by-Year Details
+      yearByYear,
+
+      // Input Parameters
+      inputs: propertyData,
     };
   } catch (error) {
-    return {
-      success: false,
-      error: error.message,
-    };
+    console.error('Calculation error:', error);
+    throw error;
   }
 }
 
@@ -183,12 +186,7 @@ export function calculatePropertyInvestment(propertyData) {
  * @returns {object} Stamp duty calculation
  */
 export function calculateStampDutyOnly(purchasePrice, state, isFirstHomeBuyer = false) {
-  try {
-    const result = calculateStampDuty(purchasePrice, state, isFirstHomeBuyer);
-    return { success: true, data: result };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+  return calculateStampDuty(purchasePrice, state, isFirstHomeBuyer);
 }
 
 /**
@@ -199,10 +197,5 @@ export function calculateStampDutyOnly(purchasePrice, state, isFirstHomeBuyer = 
  * @returns {object} Loan repayment calculation
  */
 export function calculateLoanRepaymentsOnly(loanAmount, interestRate, loanTerm) {
-  try {
-    const result = calculateLoanRepayments(loanAmount, interestRate, loanTerm);
-    return { success: true, data: result };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+  return calculateLoanRepayments(loanAmount, interestRate, loanTerm);
 }

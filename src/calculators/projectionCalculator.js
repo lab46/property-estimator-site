@@ -113,11 +113,14 @@ export function calculateInvestmentMetrics(projection, initialInvestment) {
   
   // Calculate total return
   const totalReturn = finalYear.netWorth - initialInvestment;
-  const returnOnInvestment = (totalReturn / initialInvestment) * 100;
+  const returnOnInvestment = initialInvestment > 0 ? (totalReturn / initialInvestment) * 100 : 0;
   
   // Calculate average annual return (CAGR - Compound Annual Growth Rate)
   const years = projection.length - 1;
-  const cagr = (Math.pow(finalYear.netWorth / initialInvestment, 1 / years) - 1) * 100;
+  let cagr = 0;
+  if (initialInvestment > 0 && finalYear.netWorth > 0 && years > 0) {
+    cagr = (Math.pow(finalYear.netWorth / initialInvestment, 1 / years) - 1) * 100;
+  }
   
   return {
     initialInvestment: Math.round(initialInvestment),

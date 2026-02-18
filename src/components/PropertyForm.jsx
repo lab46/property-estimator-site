@@ -149,16 +149,18 @@ function PropertyForm({ onCalculate }) {
   };
 
   const handleSubmit = async (e) => {
+    e.preventDefault();
+    
     // Convert all expenses to monthly
     const payload = {
       propertyAddress: formData.propertyAddress,
       purchasePrice: parseFloat(formData.purchasePrice),
-      deposit: parseFloat(formData.deposit),
-      lmi: parseFloat(formData.lmi) || 0,
+      depositAmount: parseFloat(formData.deposit),
+      additionalUpfrontCosts: parseFloat(formData.lmi) || 0,
       interestRate: parseFloat(formData.interestRate),
       loanTerm: parseInt(formData.loanTerm),
       state: formData.state,
-      isFirstHome: formData.isFirstHome,
+      isFirstHomeBuyer: formData.isFirstHome,
       weeklyRent: parseFloat(formData.weeklyRent) || 0,
       weeksRented: parseInt(formData.weeksRented) || 52,
       propertyManagementFee: parseFloat(formData.propertyManagementFee) || 0,
