@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { calculatePropertyInvestment } from './calculationService.js';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -104,13 +105,14 @@ apiClient.interceptors.response.use(
 
 // API Methods
 export const api = {
-  // Calculate property metrics
+  // Calculate property metrics (CLIENT-SIDE)
+  // Calculations now happen locally in the browser
   calculate: async (propertyData) => {
     try {
-      const response = await apiClient.post('/calculate', propertyData);
-      return response.data;
+      // Perform calculation client-side
+      return calculatePropertyInvestment(propertyData);
     } catch (error) {
-      console.error('Calculate API error:', error);
+      console.error('Calculate error:', error);
       throw error;
     }
   },

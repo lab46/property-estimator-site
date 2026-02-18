@@ -32,7 +32,8 @@ function CalculatorPage() {
     setError(null);
     
     try {
-      const result = await calculateProperty(formData, getAccessTokenSilently);
+      // Calculations now happen client-side, no API call needed
+      const result = await calculateProperty(formData);
       setResults(result);
     } catch (err) {
       setError(err.message || 'Failed to calculate property returns');

@@ -1,7 +1,12 @@
 /**
  * API Service for Property Estimator
  * Handles all API calls to the backend
+ * 
+ * Note: Property calculations are now performed client-side.
+ * This service only handles database operations (save, get, delete).
  */
+
+import { calculatePropertyInvestment } from './calculationService.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -29,13 +34,12 @@ async function apiRequest(endpoint, options = {}, getAccessToken) {
 }
 
 /**
- * Calculate property investment returns
+ * Calculate property investment returns (CLIENT-SIDE)
+ * This now performs calculations locally instead of calling the backend
  */
-export async function calculateProperty(data, getAccessToken) {
-  return apiRequest('/calculate', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }, getAccessToken);
+export async function calculateProperty(data) {
+  // Perform calculation client-side
+  return calculatePropertyInvestment(data);
 }
 
 /**
