@@ -46,6 +46,16 @@ function SavedPropertiesPage() {
     }
   };
 
+  const handleViewProperty = (property) => {
+    // Navigate to calculator with the saved property data for recalculation
+    navigate('/calculator', { 
+      state: { 
+        propertyData: property,
+        mode: 'view' 
+      } 
+    });
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-AU', {
       style: 'currency',
@@ -142,7 +152,10 @@ function SavedPropertiesPage() {
               </div>
 
               <div className="flex gap-2">
-                <button className="btn-primary flex-1 text-sm">
+                <button 
+                  onClick={() => handleViewProperty(property)}
+                  className="btn-primary flex-1 text-sm"
+                >
                   View Details
                 </button>
                 <button className="btn-secondary flex-1 text-sm">

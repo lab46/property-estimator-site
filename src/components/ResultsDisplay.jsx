@@ -3,7 +3,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import api from '../services/api';
 import YearByYearAnalysis from './YearByYearAnalysis';
 
-function ResultsDisplay({ results, onReset }) {
+function ResultsDisplay({ results, onReset, inputData }) {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -26,26 +26,10 @@ function ResultsDisplay({ results, onReset }) {
     setSaveError(null);
     
     try {
+      // Save only the input data, not calculated results
       const propertyData = {
-        name: `Property - ${new Date().toLocaleDateString()}`,
-        address: '',
-        state: results.stampDuty?.state || 'NSW',
-        purchasePrice: results.summary.purchasePrice,
-        deposit: results.summary.depositAmount,
-        interestRate: results.loanDetails.annualInterestRate,
-        loanTerm: results.loanDetails.loanTermYears,
-        weeklyRent: results.cashFlow.income.weekly,
-        propertyManagementFee: results.cashFlow.costs.breakdown?.propertyManagement 
-          ? (results.cashFlow.costs.breakdown.propertyManagement / results.cashFlow.income.annual) * 100 
-          : 0,
-        councilRates: results.cashFlow.costs.breakdown?.councilRates || 0,
-        waterRates: results.cashFlow.costs.breakdown?.waterRates || 0,
-        insurance: results.cashFlow.costs.breakdown?.insurance || 0,
-        maintenance: results.cashFlow.costs.breakdown?.maintenance || 0,
-        capitalGrowthRate: 5,
-        rentalGrowthRate: 3,
-        isFirstHome: results.stampDuty?.isFirstHome || false,
-        calculationResults: results,
+        name: inputData?.propertyAddress || `Property - ${new Date().toLocaleDateString()}`,
+        ...inputData,
       };
       
       await api.saveProperty(propertyData);

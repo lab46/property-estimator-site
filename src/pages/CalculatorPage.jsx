@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 import PropertyForm from '../components/PropertyForm';
 import ResultsDisplay from '../components/ResultsDisplay';
@@ -7,9 +8,19 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 function CalculatorPage() {
   const { isAuthenticated, loginWithRedirect } = useAuth0();
+  const location = useLocation();
   const [results, setResults] = useState(null);
+  const [inputData, setInputData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Load saved property if navigated from SavedPropertiesPage
+  useEffect(() => {
+    if (location.state?.propertyData) {
+      const savedData = location.state.propertyData;
+      handleCalculate(savedData);
+    }
+  }, [location.state]);
 
   if (!isAuthenticated) {
     return (
@@ -32,6 +43,8 @@ function CalculatorPage() {
     setError(null);
     
     try {
+      // Store input data for saving later
+      setInputData(formData);
       // Calculations now happen client-side, no API call needed
       const result = await api.calculate(formData);
       setResults(result);
@@ -86,6 +99,7 @@ function CalculatorPage() {
       ) : (
         <ResultsDisplay 
           results={results} 
+          inputData={inputData}
           onReset={handleReset}
         />
       )}
