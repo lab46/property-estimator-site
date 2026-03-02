@@ -11,14 +11,18 @@ import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
   const auth0 = useAuth0();
-  const { isLoading } = auth0;
+  const { isLoading, getAccessTokenSilently, loginWithRedirect } = auth0;
 
   // Set Auth0 client for API interceptors
   useEffect(() => {
     if (!isLoading) {
-      setAuth0Client(auth0);
+      console.log('Setting Auth0 client, has getAccessTokenSilently:', !!getAccessTokenSilently);
+      setAuth0Client({
+        getTokenSilently: getAccessTokenSilently,
+        loginWithRedirect: loginWithRedirect
+      });
     }
-  }, [auth0, isLoading]);
+  }, [isLoading, getAccessTokenSilently, loginWithRedirect]);
 
   if (isLoading) {
     return <LoadingSpinner />;

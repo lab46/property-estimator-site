@@ -16,7 +16,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json'
   },
   timeout: 30000, // 30 second timeout
 });
@@ -40,15 +40,25 @@ apiClient.interceptors.request.use(
           }
         });
         
+        console.log('Token obtained successfully for request:', config.url);
         config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        console.warn('Auth0 client not initialized');
       }
     } catch (error) {
       console.error('Failed to get auth token:', error);
       
-      // If token refresh fails, redirect to login
-      if (error.error === 'login_required') {
-        await auth0Client?.loginWithRedirect();
+      // Only redirect on specific errors that require re-authentication
+      if (error.error === 'login_required' || error.error === 'consent_required') {
+        console.log('Redirecting to login due to:', error.error);
+        if (auth0Client?.loginWithRedirect) {
+          await auth0Client.loginWithRedirect();
+        }
+        throw error; // Stop the request
       }
+      
+      // For other errors, log but don't redirect - let the response interceptor handle it
+      console.warn('Token error, continuing with request:', error.message);
     }
     
     return config;
@@ -62,6 +72,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Check if this is a network/CORS error (no response)
+    if (!error.response) {
+      console.error('Network error or CORS issue:', error.message);
+      // Don't redirect on CORS/network errors
+      return Promise.reject(new Error('Network error: Unable to reach the server. Please check your connection or CORS configuration.'));
+    }
+
     const originalRequest = error.config;
 
     // Handle 401 Unauthorized
@@ -70,7 +87,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Try to get a fresh token
-        if (auth0Client) {
+        if (auth0Client && auth0Client.getTokenSilently) {
           const token = await auth0Client.getTokenSilently({
             authorizationParams: {
               audience: import.meta.env.VITE_AUTH0_AUDIENCE,
@@ -84,7 +101,9 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // If refresh fails, redirect to login
         console.error('Token refresh failed:', refreshError);
-        await auth0Client?.loginWithRedirect();
+        if (auth0Client?.loginWithRedirect) {
+          await auth0Client.loginWithRedirect();
+        }
         return Promise.reject(refreshError);
       }
     }
