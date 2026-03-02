@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { saveProperty } from '../services/api';
+import api from '../services/api';
 import YearByYearAnalysis from './YearByYearAnalysis';
 
-function ResultsDisplay({ results, onReset, getAccessToken }) {
+function ResultsDisplay({ results, onReset }) {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -34,7 +34,7 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
         deposit: results.summary.depositAmount,
         interestRate: results.loanDetails.annualInterestRate,
         loanTerm: results.loanDetails.loanTermYears,
-        weeklyRent: results.cashFlow.income.weekly,weekly,
+        weeklyRent: results.cashFlow.income.weekly,
         propertyManagementFee: results.cashFlow.costs.breakdown?.propertyManagement 
           ? (results.cashFlow.costs.breakdown.propertyManagement / results.cashFlow.income.annual) * 100 
           : 0,
@@ -48,7 +48,7 @@ function ResultsDisplay({ results, onReset, getAccessToken }) {
         calculationResults: results,
       };
       
-      await saveProperty(propertyData, getAccessToken);
+      await api.saveProperty(propertyData);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {

@@ -32,30 +32,30 @@ function PropertyForm({ onCalculate }) {
     isFirstHome: false,
     
     // Loan details
-    interestRate: '',
+    interestRate: '6.5',
     loanTerm: '30',
     
     // Income
-    weeklyRent: '',
-    weeksRented: '52',
+    weeklyRent: '0',
+    weeksRented: '48',
     
     // Expenses with frequencies
     propertyManagementFee: '8',
-    councilRates: '2000',
+    councilRates: '0',
     councilRatesFreq: 'yearly',
     waterRates: '800',
     waterRatesFreq: 'yearly',
-    insurance: '1200',
+    insurance: '0',
     insuranceFreq: 'yearly',
-    maintenance: '1500',
+    maintenance: '0',
     maintenanceFreq: 'yearly',
-    emergencyServicesLevy: '',
+    emergencyServicesLevy: '0',
     emergencyServicesLevyFreq: 'yearly',
-    landTax: '',
+    landTax: '0',
     landTaxFreq: 'yearly',
-    wealthFee: '',
+    wealthFee: '0',
     wealthFeeFreq: 'monthly',
-    strata: '',
+    strata: '0',
     strataFreq: 'quarterly',
     
     // Growth assumptions
@@ -63,7 +63,7 @@ function PropertyForm({ onCalculate }) {
     rentalGrowthRate: '3',
     
     // Options
-    includeStressTests: true,
+    includeStressTests: false,
   });
 
   const [errors, setErrors] = useState({});

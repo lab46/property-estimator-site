@@ -6,75 +6,180 @@
  * This service only handles database operations (save, get, delete).
  */
 
+import axios from 'axios';
 import { calculatePropertyInvestment } from './calculationService.js';
 
+// API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-/**
- * Make authenticated API request
- */
-async function apiRequest(endpoint, options = {}, getAccessToken) {
-  const token = await getAccessToken();
-  
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
+// Create axios instance with default config
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000, // 30 second timeout
+});
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
+// Auth0 instance (set this from your Auth0Provider)
+let auth0Client = null;
+
+export const setAuth0Client = (client) => {
+  auth0Client = client;
+};
+
+// Request interceptor - Add Auth0 token
+apiClient.interceptors.request.use(
+  async (config) => {
+    try {
+      if (auth0Client) {
+        // Get fresh token from Auth0
+        const token = await auth0Client.getTokenSilently({
+          authorizationParams: {
+            audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+          }
+        });
+        
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Failed to get auth token:', error);
+      
+      // If token refresh fails, redirect to login
+      if (error.error === 'login_required') {
+        await auth0Client?.loginWithRedirect();
+      }
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
+);
 
-  return response.json();
-}
+// Response interceptor - Handle errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-/**
- * Calculate property investment returns (CLIENT-SIDE)
- * This now performs calculations locally instead of calling the backend
- */
-export async function calculateProperty(data) {
-  // Perform calculation client-side
-  return calculatePropertyInvestment(data);
-}
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
 
-/**
- * Save a property calculation
- */
-export async function saveProperty(data, getAccessToken) {
-  return apiRequest('/properties', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }, getAccessToken);
-}
+      try {
+        // Try to get a fresh token
+        if (auth0Client) {
+          const token = await auth0Client.getTokenSilently({
+            authorizationParams: {
+              audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+            },
+            cacheMode: 'off' // Force fresh token
+          });
 
-/**
- * Get all saved properties
- */
-export async function getProperties(getAccessToken) {
-  return apiRequest('/properties', {
-    method: 'GET',
-  }, getAccessToken);
-}
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        // If refresh fails, redirect to login
+        console.error('Token refresh failed:', refreshError);
+        await auth0Client?.loginWithRedirect();
+        return Promise.reject(refreshError);
+      }
+    }
 
-/**
- * Get a single property by ID
- */
-export async function getProperty(propertyId, getAccessToken) {
-  return apiRequest(`/properties/${propertyId}`, {
-    method: 'GET',
-  }, getAccessToken);
-}
+    // Handle 403 Forbidden
+    if (error.response?.status === 403) {
+      console.error('Access forbidden:', error.response.data);
+      // Could show a message to user
+    }
 
-/**
- * Delete a property
- */
-export async function deleteProperty(propertyId, getAccessToken) {
-  return apiRequest(`/properties/${propertyId}`, {
-    method: 'DELETE',
-  }, getAccessToken);
-}
+    // Handle 429 Rate Limit
+    if (error.response?.status === 429) {
+      console.error('Rate limit exceeded');
+      // Could implement retry with exponential backoff
+    }
+
+    // Handle 500+ Server Errors
+    if (error.response?.status >= 500) {
+      console.error('Server error:', error.response.data);
+      // Could implement retry logic
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// API Methods
+export const api = {
+  // Calculate property metrics (CLIENT-SIDE)
+  // Calculations now happen locally in the browser
+  calculate: async (propertyData) => {
+    try {
+      // Perform calculation client-side
+      return calculatePropertyInvestment(propertyData);
+    } catch (error) {
+      console.error('Calculate error:', error);
+      throw error;
+    }
+  },
+
+  // Save property
+  saveProperty: async (propertyData) => {
+    try {
+      const response = await apiClient.post('/properties', propertyData);
+      return response.data;
+    } catch (error) {
+      console.error('Save property API error:', error);
+      throw error;
+    }
+  },
+
+  // Get all properties
+  getProperties: async () => {
+    try {
+      const response = await apiClient.get('/properties');
+      return response.data;
+    } catch (error) {
+      console.error('Get properties API error:', error);
+      throw error;
+    }
+  },
+
+  // Delete property
+  deleteProperty: async (propertyId) => {
+    try {
+      const response = await apiClient.delete(`/properties/${propertyId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete property API error:', error);
+      throw error;
+    }
+  },
+
+  // Get property by ID
+  getPropertyById: async (propertyId) => {
+    try {
+      const response = await apiClient.get(`/properties/${propertyId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Get property by ID API error:', error);
+      throw error;
+    }
+  },
+
+  // Health check (optional)
+  healthCheck: async () => {
+    try {
+      const response = await apiClient.get('/health');
+      return response.data;
+    } catch (error) {
+      console.error('Health check failed:', error);
+      throw error;
+    }
+  }
+};
+
+export default api;
+

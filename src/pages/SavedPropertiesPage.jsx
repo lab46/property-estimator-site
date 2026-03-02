@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
-import { getProperties, deleteProperty } from '../services/api';
+import api from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function SavedPropertiesPage() {
-  const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, loginWithRedirect } = useAuth0();
   const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ function SavedPropertiesPage() {
   const loadProperties = async () => {
     try {
       setLoading(true);
-      const data = await getProperties(getAccessTokenSilently);
+      const data = await api.getProperties();
       setProperties(data.properties || []);
     } catch (err) {
       setError(err.message);
@@ -37,7 +37,7 @@ function SavedPropertiesPage() {
 
     try {
       setDeleting(propertyId);
-      await deleteProperty(propertyId, getAccessTokenSilently);
+      await api.deleteProperty(propertyId);
       setProperties(properties.filter(p => p.propertyId !== propertyId));
     } catch (err) {
       alert(`Failed to delete property: ${err.message}`);

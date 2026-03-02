@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { calculateProperty } from '../services/api';
+import api from '../services/api';
 import PropertyForm from '../components/PropertyForm';
 import ResultsDisplay from '../components/ResultsDisplay';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function CalculatorPage() {
-  const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, loginWithRedirect } = useAuth0();
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -33,7 +33,7 @@ function CalculatorPage() {
     
     try {
       // Calculations now happen client-side, no API call needed
-      const result = await calculateProperty(formData);
+      const result = await api.calculate(formData);
       setResults(result);
     } catch (err) {
       setError(err.message || 'Failed to calculate property returns');
@@ -87,7 +87,6 @@ function CalculatorPage() {
         <ResultsDisplay 
           results={results} 
           onReset={handleReset}
-          getAccessToken={getAccessTokenSilently}
         />
       )}
     </div>
