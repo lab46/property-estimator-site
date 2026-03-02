@@ -60,6 +60,15 @@ function YearByYearAnalysis({ data }) {
         </div>
       </div>
 
+      {/* Column Explanations */}
+      <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4 text-sm">
+        <h3 className="font-semibold mb-2 text-gray-800">Understanding the Data:</h3>
+        <div className="grid md:grid-cols-2 gap-2 text-gray-700">
+          <div><strong>Cumulative Cash Flow:</strong> Total profit/loss from rent after all expenses year-to-date</div>
+          <div><strong>Net Position:</strong> Property Value - Loan Balance + Cumulative Cash Flow (your actual wealth)</div>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -86,53 +95,75 @@ function YearByYearAnalysis({ data }) {
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Monthly Cash Flow
               </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cumulative Cash Flow
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Net Position
+              </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {displayData.map((yearData) => (
-              <tr 
-                key={yearData.year}
-                className={yearData.isSelfSufficient ? 'bg-green-50' : ''}
-              >
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {yearData.year}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
-                  {formatCurrency(yearData.propertyValue)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
-                  {formatCurrency(yearData.loanBalance)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                  {formatCurrency(yearData.equity)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-600">
-                  {yearData.equityPercentage}%
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
-                  {formatCurrency(yearData.monthlyRent)}
-                </td>
-                <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-medium ${
-                  yearData.monthlyCashFlow >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {formatCurrency(yearData.monthlyCashFlow)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-center">
-                  {yearData.isSelfSufficient ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      ✓ Self-Sufficient
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      Negative
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {displayData.map((yearData) => {
+              // Calculate net position for this year
+              // Net Position = Property Value - Loan Balance + Cumulative Cash Flow
+              const netPosition = yearData.propertyValue - yearData.loanBalance + (yearData.cumulativeCashFlow || 0);
+              
+              return (
+                <tr 
+                  key={yearData.year}
+                  className={yearData.isSelfSufficient ? 'bg-green-50' : ''}
+                >
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {yearData.year}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
+                    {formatCurrency(yearData.propertyValue)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
+                    {formatCurrency(yearData.loanBalance)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">
+                    {formatCurrency(yearData.equity)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-600">
+                    {yearData.equityPercentage}%
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900">
+                    {formatCurrency(yearData.monthlyRent)}
+                  </td>
+                  <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-medium ${
+                    yearData.monthlyCashFlow >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {formatCurrency(yearData.monthlyCashFlow)}
+                  </td>
+                  <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-medium ${
+                    (yearData.cumulativeCashFlow || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {formatCurrency(yearData.cumulativeCashFlow || 0)}
+                  </td>
+                  <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-bold ${
+                    netPosition >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {formatCurrency(netPosition)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-center">
+                    {yearData.isSelfSufficient ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        ✓ Self-Sufficient
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        Negative
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

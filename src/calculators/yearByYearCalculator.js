@@ -31,6 +31,7 @@ export function calculateYearByYear({
   let currentPropertyValue = purchasePrice;
   let currentMonthlyRent = initialMonthlyRent;
   let selfSufficientYear = null;
+  let cumulativeCashFlow = 0; // Track cumulative cash flow
 
   for (let year = 1; year <= loanTerm; year++) {
     // Track values at the start of the year
@@ -72,6 +73,9 @@ export function calculateYearByYear({
     // Calculate cash flow
     const annualCashFlow = annualRent - annualExpenses - annualLoanPayment;
     const monthlyCashFlow = annualCashFlow / 12;
+    
+    // Update cumulative cash flow
+    cumulativeCashFlow += annualCashFlow;
 
     // Check if property becomes self-sufficient this year
     if (!selfSufficientYear && annualCashFlow >= 0) {
@@ -90,6 +94,7 @@ export function calculateYearByYear({
       interestPaid: Math.round(yearlyInterestPaid),
       monthlyCashFlow: Math.round(monthlyCashFlow),
       annualCashFlow: Math.round(annualCashFlow),
+      cumulativeCashFlow: Math.round(cumulativeCashFlow),
       isSelfSufficient: annualCashFlow >= 0,
     });
   }
