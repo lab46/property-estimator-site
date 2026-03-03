@@ -3,7 +3,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import api from '../services/api';
 import YearByYearAnalysis from './YearByYearAnalysis';
 
-function ResultsDisplay({ results, onReset, inputData }) {
+function ResultsDisplay({ results, onReset, onEdit, inputData }) {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -129,11 +129,29 @@ function ResultsDisplay({ results, onReset, inputData }) {
 
   return (
     <div className="space-y-6">
+      {/* Property Address Header */}
+      {inputData?.propertyAddress && (
+        <div className="card bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🏠</span>
+            <div>
+              <h1 className="text-2xl font-bold">{inputData.propertyAddress}</h1>
+              <p className="text-indigo-100 text-sm">{inputData.state || ''}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4 justify-between items-center">
-        <button onClick={onReset} className="btn-secondary">
-          ← Calculate Another Property
-        </button>
+        <div className="flex gap-3">
+          <button onClick={onReset} className="btn-secondary">
+            ← Calculate Another Property
+          </button>
+          <button onClick={onEdit} className="btn-secondary">
+            ✏️ Edit This Property
+          </button>
+        </div>
         <div className="flex gap-3">
           {saveSuccess && (
             <span className="text-green-600 font-medium flex items-center">
@@ -271,7 +289,7 @@ function ResultsDisplay({ results, onReset, inputData }) {
                   {formatCurrency(totalHoldingCosts)}
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
-                  Loan + Expenses ({loanTerm}y)
+                  Loan + Expenses ({loanTerm}y, assuming expense growthsame as rental growth if available)
                 </div>
               </div>
             );
@@ -287,7 +305,7 @@ function ResultsDisplay({ results, onReset, inputData }) {
                 {formatCurrency(cashFlowImpact.totalCashFlow)}
               </div>
               <div className="text-xs text-gray-600 mt-1">
-                {cashFlowImpact.isNegative ? '⚠️ Out-of-pocket' : '✅ Income generated'}
+                {cashFlowImpact.isNegative ? '⚠️ Out-of-pocket' : '✅ Income generated'} over {cashFlowImpact.loanTerm} years
               </div>
             </div>
           )}
@@ -296,7 +314,7 @@ function ResultsDisplay({ results, onReset, inputData }) {
           {netProfit && (
             <div className={`bg-white rounded-lg p-4 shadow-sm ring-2 ${netProfit.netPosition >= 0 ? 'ring-green-400' : 'ring-red-400'}`}>
               <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                Net Profit/Loss
+                Estimated Net Profit/Loss (Year {netProfit.loanTerm})   
               </div>
               <div className={`text-2xl font-bold ${netProfit.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(netProfit.netPosition)}
@@ -307,7 +325,7 @@ function ResultsDisplay({ results, onReset, inputData }) {
                 </span>
               </div>
               <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                = Property Value - Loan - Initial Investment + Cash Flow
+                = (Property Value + Cash Flow) - (Loan + Initial Investment)
               </div>
             </div>
           )}

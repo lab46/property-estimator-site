@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const AUSTRALIAN_STATES = [
   { value: 'NSW', label: 'New South Wales' },
@@ -20,8 +20,8 @@ const FREQUENCIES = [
   { value: 'yearly', label: 'Yearly', multiplier: 1 / 12 },
 ];
 
-function PropertyForm({ onCalculate }) {
-  const [formData, setFormData] = useState({
+function PropertyForm({ onCalculate, initialData }) {
+  const [formData, setFormData] = useState(initialData || {
     // Property details
     propertyAddress: '',
     purchasePrice: '',
@@ -67,6 +67,13 @@ function PropertyForm({ onCalculate }) {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Update form when initialData changes (for edit mode)
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

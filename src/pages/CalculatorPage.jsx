@@ -58,6 +58,13 @@ function CalculatorPage() {
 
   const handleReset = () => {
     setResults(null);
+    setInputData(null);
+    setError(null);
+  };
+
+  const handleEdit = () => {
+    // Keep the inputData but clear results to show the form
+    setResults(null);
     setError(null);
   };
 
@@ -95,12 +102,13 @@ function CalculatorPage() {
       )}
 
       {!results ? (
-        <PropertyForm onCalculate={handleCalculate} />
+        <PropertyForm onCalculate={handleCalculate} initialData={inputData} />
       ) : (
         <ResultsDisplay 
           results={results} 
           inputData={inputData}
           onReset={handleReset}
+          onEdit={handleEdit}
         />
       )}
     </div>
