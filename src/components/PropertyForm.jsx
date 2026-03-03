@@ -21,57 +21,103 @@ const FREQUENCIES = [
 ];
 
 function PropertyForm({ onCalculate, initialData }) {
-  const [formData, setFormData] = useState(initialData || {
-    // Property details
-    propertyAddress: '',
-    purchasePrice: '',
-    deposit: '',
-    depositPercentage: '20',
-    lmi: '0',
-    state: 'NSW',
-    isFirstHome: false,
+  const getInitialFormData = () => {
+    const defaultData = {
+      // Property details
+      propertyAddress: '',
+      purchasePrice: '',
+      deposit: '',
+      depositPercentage: '20',
+      lmi: '0',
+      state: 'NSW',
+      isFirstHome: false,
+      
+      // Loan details
+      interestRate: '6.5',
+      loanTerm: '30',
+      
+      // Income
+      weeklyRent: '0',
+      weeksRented: '48',
+      
+      // Expenses with frequencies
+      propertyManagementFee: '8',
+      councilRates: '0',
+      councilRatesFreq: 'yearly',
+      waterRates: '800',
+      waterRatesFreq: 'yearly',
+      insurance: '0',
+      insuranceFreq: 'yearly',
+      maintenance: '0',
+      maintenanceFreq: 'yearly',
+      emergencyServicesLevy: '0',
+      emergencyServicesLevyFreq: 'yearly',
+      landTax: '0',
+      landTaxFreq: 'yearly',
+      wealthFee: '0',
+      wealthFeeFreq: 'monthly',
+      strata: '0',
+      strataFreq: 'quarterly',
+      
+      // Growth assumptions
+      capitalGrowthRate: '5',
+      rentalGrowthRate: '3',
+      
+      // Options
+      includeStressTests: false,
+    };
+
+    if (!initialData) return defaultData;
+
+    // Convert saved data format back to form format
+    const deposit = initialData.depositAmount || initialData.deposit || '';
+    const purchasePrice = initialData.purchasePrice || '';
     
-    // Loan details
-    interestRate: '6.5',
-    loanTerm: '30',
+    // Calculate deposit percentage
+    let depositPercentage = initialData.depositPercentage || '20';
+    if (deposit && purchasePrice) {
+      const depositNum = parseFloat(deposit);
+      const priceNum = parseFloat(purchasePrice);
+      if (!isNaN(depositNum) && !isNaN(priceNum) && priceNum > 0) {
+        depositPercentage = ((depositNum / priceNum) * 100).toFixed(2);
+      }
+    }
     
-    // Income
-    weeklyRent: '0',
-    weeksRented: '48',
-    
-    // Expenses with frequencies
-    propertyManagementFee: '8',
-    councilRates: '0',
-    councilRatesFreq: 'yearly',
-    waterRates: '800',
-    waterRatesFreq: 'yearly',
-    insurance: '0',
-    insuranceFreq: 'yearly',
-    maintenance: '0',
-    maintenanceFreq: 'yearly',
-    emergencyServicesLevy: '0',
-    emergencyServicesLevyFreq: 'yearly',
-    landTax: '0',
-    landTaxFreq: 'yearly',
-    wealthFee: '0',
-    wealthFeeFreq: 'monthly',
-    strata: '0',
-    strataFreq: 'quarterly',
-    
-    // Growth assumptions
-    capitalGrowthRate: '5',
-    rentalGrowthRate: '3',
-    
-    // Options
-    includeStressTests: false,
-  });
+    return {
+      ...defaultData,
+      ...initialData,
+      // Convert depositAmount back to deposit
+      deposit: deposit,
+      depositPercentage: depositPercentage,
+      lmi: initialData.lmi || '0',
+      // Convert monthly expenses back to annual with yearly frequency
+      councilRates: initialData.councilRatesMonthly ? (initialData.councilRatesMonthly * 12).toFixed(0) : initialData.councilRates || '0',
+      councilRatesFreq: 'yearly',
+      waterRates: initialData.waterRatesMonthly ? (initialData.waterRatesMonthly * 12).toFixed(0) : initialData.waterRates || '800',
+      waterRatesFreq: 'yearly',
+      insurance: initialData.insuranceMonthly ? (initialData.insuranceMonthly * 12).toFixed(0) : initialData.insurance || '0',
+      insuranceFreq: 'yearly',
+      maintenance: initialData.maintenanceMonthly ? (initialData.maintenanceMonthly * 12).toFixed(0) : initialData.maintenance || '0',
+      maintenanceFreq: 'yearly',
+      emergencyServicesLevy: initialData.emergencyServicesLevyMonthly ? (initialData.emergencyServicesLevyMonthly * 12).toFixed(0) : initialData.emergencyServicesLevy || '0',
+      emergencyServicesLevyFreq: 'yearly',
+      landTax: initialData.landTaxMonthly ? (initialData.landTaxMonthly * 12).toFixed(0) : initialData.landTax || '0',
+      landTaxFreq: 'yearly',
+      wealthFee: initialData.wealthFeeMonthly ? (initialData.wealthFeeMonthly * 12).toFixed(0) : initialData.wealthFee || '0',
+      wealthFeeFreq: 'yearly',
+      strata: initialData.strataMonthly ? (initialData.strataMonthly * 12).toFixed(0) : initialData.strata || '0',
+      strataFreq: 'yearly',
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData());
 
   const [errors, setErrors] = useState({});
 
   // Update form when initialData changes (for edit mode)
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData(getInitialFormData());
     }
   }, [initialData]);
 

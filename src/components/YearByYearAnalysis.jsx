@@ -1,5 +1,32 @@
 import { useState } from 'react';
 
+// Tooltip component
+function InfoTooltip({ content }) {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  return (
+    <div className="relative inline-block ml-1">
+      <button
+        type="button"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        className="text-gray-400 hover:text-gray-600 focus:outline-none"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        </svg>
+      </button>
+      {isVisible && (
+        <div className="absolute z-50 w-64 p-2 text-xs text-white bg-gray-900 rounded-lg shadow-lg -top-2 left-6 transform">
+          <div className="whitespace-normal">{content}</div>
+          <div className="absolute top-3 -left-1 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function YearByYearAnalysis({ data }) {
   const [showAll, setShowAll] = useState(false);
   
@@ -28,7 +55,10 @@ function YearByYearAnalysis({ data }) {
         <h3 className="text-lg font-semibold mb-3 text-blue-900">Key Insights</h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-gray-600">Self-Sufficient Status</p>
+            <p className="text-sm text-gray-600 flex items-center">
+              Self-Sufficient Status
+              <InfoTooltip content="The first year when rental income covers all expenses and loan repayments (cash flow becomes positive)." />
+            </p>
             {summary.selfSufficientYear ? (
               <p className="text-lg font-bold text-green-600">
                 Year {summary.selfSufficientYear}
@@ -40,19 +70,28 @@ function YearByYearAnalysis({ data }) {
             )}
           </div>
           <div>
-            <p className="text-sm text-gray-600">Final Property Value</p>
+            <p className="text-sm text-gray-600 flex items-center">
+              Final Property Value
+              <InfoTooltip content="Estimated property value at the end of the loan term, after applying annual capital growth." />
+            </p>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(summary.finalPropertyValue)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Final Equity (Loan Paid Off)</p>
+            <p className="text-sm text-gray-600 flex items-center">
+              Final Equity (Loan Paid Off)
+              <InfoTooltip content="Your total equity when the loan is fully paid off = Property Value - Remaining Loan Balance." />
+            </p>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(summary.finalEquity)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600">Final Monthly Rent</p>
+            <p className="text-sm text-gray-600 flex items-center">
+              Final Monthly Rent
+              <InfoTooltip content="Estimated monthly rental income at the end of the loan term, after applying annual rental growth." />
+            </p>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(summary.finalMonthlyRent)}
             </p>
@@ -78,31 +117,58 @@ function YearByYearAnalysis({ data }) {
                 Year
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Property Value
+                <span className="flex items-center justify-end">
+                  Property Value
+                  <InfoTooltip content="Property value at end of this year, growing at your capital growth rate." />
+                </span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Loan Balance
+                <span className="flex items-center justify-end">
+                  Loan Balance
+                  <InfoTooltip content="Remaining loan amount after this year's repayments." />
+                </span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Equity
+                <span className="flex items-center justify-end">
+                  Equity
+                  <InfoTooltip content="Your ownership = Property Value - Loan Balance." />
+                </span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Equity %
+                <span className="flex items-center justify-end">
+                  Equity %
+                  <InfoTooltip content="Percentage of property you own = (Equity / Property Value) × 100." />
+                </span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Monthly Rent
+                <span className="flex items-center justify-end">
+                  Monthly Rent
+                  <InfoTooltip content="Monthly rental income for this year, growing at your rental growth rate." />
+                </span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Monthly Cash Flow
+                <span className="flex items-center justify-end">
+                  Monthly Cash Flow
+                  <InfoTooltip content="Monthly profit/loss = Rent - (Loan Payment + Expenses). Green is positive, red is negative." />
+                </span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cumulative Cash Flow
+                <span className="flex items-center justify-end">
+                  Cumulative Cash Flow
+                  <InfoTooltip content="Running total of all cash flow to date. Shows total profit or out-of-pocket costs over time." />
+                </span>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Net Position
+                <span className="flex items-center justify-end">
+                  Net Position
+                  <InfoTooltip content="Your actual wealth position = Property Value - Loan Balance + Cumulative Cash Flow." />
+                </span>
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                <span className="flex items-center justify-center">
+                  Status
+                  <InfoTooltip content="Shows if cash flow is positive (✓) or negative (×) for this year." />
+                </span>
               </th>
             </tr>
           </thead>

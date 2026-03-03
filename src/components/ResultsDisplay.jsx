@@ -3,6 +3,33 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import api from '../services/api';
 import YearByYearAnalysis from './YearByYearAnalysis';
 
+// Tooltip component
+function InfoTooltip({ content }) {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  return (
+    <div className="relative inline-block ml-1">
+      <button
+        type="button"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        className="text-gray-400 hover:text-gray-600 focus:outline-none"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+        </svg>
+      </button>
+      {isVisible && (
+        <div className="absolute z-50 w-64 p-2 text-xs text-white bg-gray-900 rounded-lg shadow-lg -top-2 left-6 transform">
+          <div className="whitespace-normal">{content}</div>
+          <div className="absolute top-3 -left-1 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ResultsDisplay({ results, onReset, onEdit, inputData }) {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -68,19 +95,27 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
                              results.summary.additionalCosts;
     
     const finalPropertyValue = lastYear.propertyValue;
-    const remainingLoan = lastYear.remainingLoan || 0;
     const cumulativeCashFlow = lastYear.cumulativeCashFlow;
     
-    // Net position = Property Value - Remaining Loan + Cumulative Cash Flow - Initial Investment
-    const netPosition = finalPropertyValue - remainingLoan + cumulativeCashFlow - initialInvestment;
+    // Total capital deployed = Initial Investment + out-of-pocket costs (negative cash flow)
+    // If cashflow is negative (e.g., -$352,041), you paid out $352,041
+    const totalCapitalDeployed = initialInvestment + Math.abs(Math.min(0, cumulativeCashFlow));
+    
+    // Net profit = Property Value - Total Capital Deployed
+    // = Property Value - (Initial Investment + |Negative Cashflow|)
+    const netPosition = finalPropertyValue - totalCapitalDeployed;
+    
+    // ROI based on total capital deployed
+    const roi = (netPosition / totalCapitalDeployed) * 100;
     
     return {
       initialInvestment,
       finalPropertyValue,
-      remainingLoan,
+      remainingLoan: lastYear.remainingLoan || 0,
       cumulativeCashFlow,
       netPosition,
-      roi: (netPosition / initialInvestment) * 100,
+      totalCapitalDeployed,
+      roi,
       loanTerm
     };
   };
@@ -184,7 +219,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Purchase Price */}
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Purchase Price</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+              Purchase Price
+              <InfoTooltip content="The property's purchase price as entered in your calculation." />
+            </div>
             <div className="text-2xl font-bold text-gray-900">
               {formatCurrency(results.summary.purchasePrice)}
             </div>
@@ -192,7 +230,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
 
           {/* Loan Amount */}
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Loan Amount</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+              Loan Amount
+              <InfoTooltip content={`Loan Amount = Purchase Price - Deposit. Your loan is ${formatPercent(results.loanDetails.lvr)} of the property value (LVR = Loan to Value Ratio).`} />
+            </div>
             <div className="text-2xl font-bold text-blue-600">
               {formatCurrency(results.summary.loanAmount)}
             </div>
@@ -203,7 +244,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
 
           {/* Total Interest */}
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Interest ({results.loanDetails.loanTermYears}y)</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+              Total Interest ({results.loanDetails.loanTermYears}y)
+              <InfoTooltip content={`Total interest you'll pay over ${results.loanDetails.loanTermYears} years at ${formatPercent(results.loanDetails.annualInterestRate)} interest rate. Calculated as: (Monthly Payment × 12 × ${results.loanDetails.loanTermYears}) - Loan Amount.`} />
+            </div>
             <div className="text-2xl font-bold text-red-600">
               {formatCurrency(results.loanDetails.totalInterest)}
             </div>
@@ -214,7 +258,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
 
           {/* Monthly Repayment */}
           <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Monthly Repayment</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+              Monthly Repayment
+              <InfoTooltip content={`Your monthly loan repayment calculated using the standard mortgage formula: P × [r(1+r)^n]/[(1+r)^n-1], where P = loan amount, r = monthly interest rate, n = number of months. This is a ${results.loanDetails.loanType || 'principal and interest'} loan.`} />
+            </div>
             <div className="text-2xl font-bold text-orange-600">
               {formatCurrency(results.loanDetails.monthlyRepayment)}
             </div>
@@ -226,7 +273,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
           {/* Property Value at End */}
           {netProfit && (
             <div className="bg-white rounded-lg p-4 shadow-sm">
-              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Est. Value (Year {netProfit.loanTerm})</div>
+              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                Est. Value (Year {netProfit.loanTerm})
+                <InfoTooltip content={`Estimated property value after ${netProfit.loanTerm} years, calculated as: ${formatCurrency(results.summary.purchasePrice)} × (1 + ${inputData?.capitalGrowthRate || 5}%)^${netProfit.loanTerm}. Based on your capital growth assumption of ${inputData?.capitalGrowthRate || 5}% per year.`} />
+              </div>
               <div className="text-2xl font-bold text-green-600">
                 {formatCurrency(netProfit.finalPropertyValue)}
               </div>
@@ -245,7 +295,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
             
             return (
               <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Rental Income</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                  Total Rental Income
+                  <InfoTooltip content={`Total rental income collected over ${loanTerm} years. Starting rent: ${formatCurrency(inputData?.weeklyRent ? inputData.weeklyRent * 52 : 0)}/year, growing at ${inputData?.rentalGrowthRate || 3}% per year. Each year's rent is calculated as: Previous Year Rent × (1 + ${inputData?.rentalGrowthRate || 3}%).`} />
+                </div>
                 <div className="text-2xl font-bold text-green-600">
                   {formatCurrency(totalRentalIncome)}
                 </div>
@@ -284,12 +337,15 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
             
             return (
               <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Holding Costs</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                  Total Holding Costs
+                  <InfoTooltip content={`Total cost to hold the property over ${loanTerm} years. Includes: Loan Repayments (${formatCurrency(totalLoanRepayments)}) + All Expenses growing at ${expenseGrowthRate}% per year (property management, rates, insurance, maintenance, etc.). This is what you'll pay out over the investment period.`} />
+                </div>
                 <div className="text-2xl font-bold text-red-600">
                   {formatCurrency(totalHoldingCosts)}
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
-                  Loan + Expenses ({loanTerm}y, assuming expense growthsame as rental growth if available)
+                  Total Repayments + Expenses ({loanTerm}y, assuming expense growth same as rental growth, if available)
                 </div>
               </div>
             );
@@ -298,8 +354,9 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
           {/* Cumulative Cash Flow */}
           {cashFlowImpact && (
             <div className={`bg-white rounded-lg p-4 shadow-sm ${cashFlowImpact.isNegative ? 'ring-2 ring-red-300' : 'ring-2 ring-green-300'}`}>
-              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
                 Cash Flow ({cashFlowImpact.loanTerm}y)
+                <InfoTooltip content={`Cumulative cash flow over ${cashFlowImpact.loanTerm} years = Total Rental Income - Total Holding Costs. ${cashFlowImpact.isNegative ? 'Negative means you need to pay out of pocket each year to cover the shortfall.' : 'Positive means the property generates more income than expenses.'}`} />
               </div>
               <div className={`text-2xl font-bold ${cashFlowImpact.isNegative ? 'text-red-600' : 'text-green-600'}`}>
                 {formatCurrency(cashFlowImpact.totalCashFlow)}
@@ -313,8 +370,9 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
           {/* Net Profit/Loss */}
           {netProfit && (
             <div className={`bg-white rounded-lg p-4 shadow-sm ring-2 ${netProfit.netPosition >= 0 ? 'ring-green-400' : 'ring-red-400'}`}>
-              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                Estimated Net Profit/Loss (Year {netProfit.loanTerm})   
+              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                Estimated Net Profit/Loss (Year {netProfit.loanTerm})
+                <InfoTooltip content={`Your net profit = Property Value (${formatCurrency(netProfit.finalPropertyValue)}) - Total Capital Deployed (${formatCurrency(netProfit.totalCapitalDeployed)}). Total Capital = Initial Investment + Out-of-Pocket Costs from negative cashflow. ROI of ${netProfit.roi.toFixed(1)}% is calculated on total capital deployed.`} />
               </div>
               <div className={`text-2xl font-bold ${netProfit.netPosition >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(netProfit.netPosition)}
@@ -325,7 +383,7 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
                 </span>
               </div>
               <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                = (Property Value + Cash Flow) - (Loan + Initial Investment)
+                = Property Value - Total Capital Deployed
               </div>
             </div>
           )}
@@ -337,7 +395,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
             <div className="flex items-start gap-2">
               <span className="text-lg">💵</span>
               <div>
-                <div className="font-semibold text-gray-900">Initial Investment</div>
+                <div className="font-semibold text-gray-900 flex items-center">
+                  Initial Investment
+                  <InfoTooltip content="Total upfront capital required = Deposit + Stamp Duty + Additional Costs (LMI, legal fees, etc.)" />
+                </div>
                 <div className="text-gray-700">
                   {formatCurrency(results.summary.depositAmount + (results.stampDuty?.total || 0) + results.summary.additionalCosts)}
                 </div>
@@ -347,7 +408,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
             <div className="flex items-start gap-2">
               <span className="text-lg">📈</span>
               <div>
-                <div className="font-semibold text-gray-900">Growth Assumptions</div>
+                <div className="font-semibold text-gray-900 flex items-center">
+                  Growth Assumptions
+                  <InfoTooltip content="Annual growth rates used in projections. Capital growth affects property value, rental growth affects income over time." />
+                </div>
                 <div className="text-gray-700">
                   Capital: {inputData?.capitalGrowthRate || 5}%/yr • Rental: {inputData?.rentalGrowthRate || 3}%/yr
                 </div>
@@ -356,9 +420,12 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
             <div className="flex items-start gap-2">
               <span className="text-lg">{results.cashFlow.isPositive ? '✅' : '⚠️'}</span>
               <div>
-                <div className="font-semibold text-gray-900">Cash Flow Status</div>
+                <div className="font-semibold text-gray-900 flex items-center">
+                  Cash Flow Status
+                  <InfoTooltip content={`Year 1 cash flow = Rental Income - (Loan Repayments + All Expenses). ${results.cashFlow.isPositive ? 'Positive means the property pays for itself.' : 'Negative means you need to cover the shortfall from your own funds.'}`} />
+                </div>
                 <div className={`font-medium ${results.cashFlow.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {results.cashFlow.isPositive ? 'Positive' : 'Negative'} - {formatCurrency(results.cashFlow.cashFlow.annual)}/year
+                  {results.cashFlow.isPositive ? 'Positive' : 'Negative'} [{formatCurrency(results.cashFlow.cashFlow.annual)}/year]
                 </div>
               </div>
             </div>
@@ -404,26 +471,44 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
 
       {/* Upfront Costs */}
       <div className="card">
-        <h2 className="text-xl font-bold mb-4">Upfront Costs</h2>
+        <h2 className="text-xl font-bold mb-4 flex items-center">
+          Upfront Costs
+          <InfoTooltip content="All costs you need to pay upfront when purchasing the property, including stamp duty and other transaction costs. Your deposit reduces what you need to pay from cash on hand." />
+        </h2>
         <div className="space-y-3">
           <div className="flex justify-between">
-            <span className="text-gray-600">Purchase Price</span>
+            <span className="text-gray-600 flex items-center">
+              Purchase Price
+              <InfoTooltip content="The agreed sale price of the property." />
+            </span>
             <span className="font-semibold">{formatCurrency(results.summary.purchasePrice)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Stamp Duty</span>
+            <span className="text-gray-600 flex items-center">
+              Stamp Duty
+              <InfoTooltip content={`Government tax on property transfer. ${results.stampDuty?.concessionApplied ? `You received a ${results.stampDuty.concessionType} saving ${formatCurrency(results.stampDuty.savingsAmount)}.` : 'Varies by state and property value.'}`} />
+            </span>
             <span className="font-semibold">{formatCurrency(results.stampDuty?.total || 0)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Additional Costs</span>
+            <span className="text-gray-600 flex items-center">
+              Additional Costs
+              <InfoTooltip content="Other upfront costs including legal fees, building inspection, conveyancing, and any Lenders Mortgage Insurance (LMI) if LVR > 80%." />
+            </span>
             <span className="font-semibold">{formatCurrency(results.summary.additionalCosts)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Your Deposit</span>
+            <span className="text-gray-600 flex items-center">
+              Your Deposit
+              <InfoTooltip content="Your cash deposit paid upfront, reducing the loan amount needed." />
+            </span>
             <span className="font-semibold text-red-600">-{formatCurrency(results.summary.depositAmount)}</span>
           </div>
           <div className="border-t pt-3 flex justify-between text-lg">
-            <span className="font-bold">Total Upfront (excl. deposit)</span>
+            <span className="font-bold flex items-center">
+              Total Upfront (excl. deposit)
+              <InfoTooltip content="Total cash needed at settlement = Purchase Price + Stamp Duty + Additional Costs - Deposit. This is what you pay from your own funds (excluding the loan)." />
+            </span>
             <span className="font-bold">{formatCurrency(results.summary.stampDuty + results.summary.additionalCosts)}</span>
           </div>
         </div>
@@ -431,37 +516,61 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
 
       {/* Loan Details */}
       <div className="card">
-        <h2 className="text-xl font-bold mb-4">Loan Details</h2>
+        <h2 className="text-xl font-bold mb-4 flex items-center">
+          Loan Details
+          <InfoTooltip content="Summary of your loan structure including amount borrowed, interest rate, repayment details, and total interest cost over the loan term." />
+        </h2>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">Loan Amount</span>
+              <span className="text-gray-600 flex items-center">
+                Loan Amount
+                <InfoTooltip content="Total amount borrowed from the bank = Purchase Price - Deposit" />
+              </span>
               <span className="font-semibold">{formatCurrency(results.summary.loanAmount)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Interest Rate</span>
+              <span className="text-gray-600 flex items-center">
+                Interest Rate
+                <InfoTooltip content="Annual interest rate on your loan. This is used to calculate your monthly repayments." />
+              </span>
               <span className="font-semibold">{formatPercent(results.loanDetails.annualInterestRate)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Loan Term</span>
+              <span className="text-gray-600 flex items-center">
+                Loan Term
+                <InfoTooltip content="Number of years you'll take to repay the loan if you make minimum repayments." />
+              </span>
               <span className="font-semibold">{results.loanDetails.loanTermYears} years</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">LVR</span>
+              <span className="text-gray-600 flex items-center">
+                LVR
+                <InfoTooltip content="Loan to Value Ratio = (Loan Amount / Property Value) × 100. Banks typically require LMI if LVR > 80%." />
+              </span>
               <span className="font-semibold">{formatPercent(results.loanDetails.lvr)}</span>
             </div>
           </div>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-600">Monthly Repayment</span>
+              <span className="text-gray-600 flex items-center">
+                Monthly Repayment
+                <InfoTooltip content="Your fixed monthly loan repayment calculated using standard mortgage formula. This stays constant if interest rate doesn't change." />
+              </span>
               <span className="font-semibold">{formatCurrency(results.loanDetails.monthlyRepayment)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Total Repayment</span>
+              <span className="text-gray-600 flex items-center">
+                Total Repayment
+                <InfoTooltip content={`Total you'll pay back to the bank = Monthly Repayment × 12 × ${results.loanDetails.loanTermYears} years = ${formatCurrency(results.loanDetails.totalRepayment)}`} />
+              </span>
               <span className="font-semibold">{formatCurrency(results.loanDetails.totalRepayment)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Total Interest</span>
+              <span className="text-gray-600 flex items-center">
+                Total Interest
+                <InfoTooltip content="Total interest cost = Total Repayment - Loan Amount. This is the cost of borrowing money." />
+              </span>
               <span className="font-semibold text-red-600">{formatCurrency(results.loanDetails.totalInterest)}</span>
             </div>
           </div>
@@ -475,7 +584,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
         
         return (equityMatchYear || usableEquityMatchYear) ? (
           <div className="card bg-green-50 border-2 border-green-200">
-            <h2 className="text-xl font-bold mb-4 text-green-800">🎯 Equity Milestones</h2>
+            <h2 className="text-xl font-bold mb-4 text-green-800 flex items-center">
+              🎯 Equity Milestones
+              <InfoTooltip content="Key years when your property equity reaches important thresholds. Usable equity (80% of total equity) can often be borrowed against for future investments." />
+            </h2>
             <div className="space-y-4">
               {usableEquityMatchYear && (
                 <div className="bg-white rounded-lg p-4 border border-green-300">
@@ -548,7 +660,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
       {/* Cash Flow Breakdown */}
       <div className="card">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Cash Flow Analysis</h2>
+          <h2 className="text-xl font-bold flex items-center">
+            Cash Flow Analysis
+            <InfoTooltip content="Year 1 cash flow breakdown showing rental income minus all expenses and loan repayments. Select different periods to view weekly, fortnightly, monthly, or annual figures." />
+          </h2>
           <select 
             value={cashFlowPeriod} 
             onChange={(e) => setCashFlowPeriod(e.target.value)}
@@ -621,6 +736,7 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             {cashFlowImpact.isNegative ? '⚠️' : '✅'} 
             Cash Flow Impact Over {cashFlowImpact.loanTerm} Years
+            <InfoTooltip content={`Total cumulative cash flow over ${cashFlowImpact.loanTerm} years = Sum of (Rental Income - All Expenses - Loan Repayments) for each year. ${cashFlowImpact.isNegative ? 'Negative means you need to fund the shortfall from your own savings.' : 'Positive means the property generates surplus income.'}`} />
           </h2>
           <div className="space-y-4">
             {cashFlowImpact.isNegative ? (
@@ -684,8 +800,8 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
           </h2>
           <div className="space-y-4">
             <p className="text-gray-700">
-              Considering capital growth, rental growth, and all costs, here's your projected net position 
-              at the end of year {netProfit.loanTerm}:
+              Considering capital growth, rental income, and all costs (including loan repayments and expenses), 
+              here's your projected net position at the end of year {netProfit.loanTerm}:
             </p>
             
             <div className="bg-white rounded-lg p-4 border border-blue-300">
@@ -698,6 +814,13 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
                   <div className="text-xs text-gray-500">Deposit + Stamp Duty + Costs</div>
                 </div>
                 <div>
+                  <div className="text-sm text-gray-600 mb-1">Total Capital Deployed</div>
+                  <div className="text-lg font-semibold text-orange-600">
+                    {formatCurrency(netProfit.totalCapitalDeployed)}
+                  </div>
+                  <div className="text-xs text-gray-500">Initial + Out-of-Pocket Costs</div>
+                </div>
+                <div>
                   <div className="text-sm text-gray-600 mb-1">Final Property Value</div>
                   <div className="text-lg font-semibold text-green-600">
                     {formatCurrency(netProfit.finalPropertyValue)}
@@ -705,16 +828,11 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
                   <div className="text-xs text-gray-500">After {netProfit.loanTerm} years growth</div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 mb-1">Remaining Loan Balance</div>
-                  <div className="text-lg font-semibold text-red-600">
-                    {formatCurrency(netProfit.remainingLoan)}
-                  </div>
-                </div>
-                <div>
                   <div className="text-sm text-gray-600 mb-1">Cumulative Cash Flow</div>
                   <div className={`text-lg font-semibold ${netProfit.cumulativeCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {formatCurrency(netProfit.cumulativeCashFlow)}
                   </div>
+                  <div className="text-xs text-gray-500">Rental Income - All Costs</div>
                 </div>
               </div>
               
@@ -731,11 +849,29 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
                     {netProfit.roi.toFixed(1)}%
                   </span>
                 </div>
+                <div className="text-xs text-gray-500 mt-2">
+                  ROI calculated on total capital deployed ({formatCurrency(netProfit.totalCapitalDeployed)})
+                </div>
               </div>
             </div>
 
             <div className="bg-blue-100 rounded-lg p-3 text-sm text-blue-900">
-              <strong>Calculation:</strong> Net Position = Property Value - Remaining Loan + Cumulative Cash Flow - Initial Investment
+              <div className="mb-2"><strong>Net Profit Calculation:</strong></div>
+              <div className="font-mono text-xs">
+                = Property Value ({formatCurrency(netProfit.finalPropertyValue)})<br/>
+                - Total Capital Deployed ({formatCurrency(netProfit.totalCapitalDeployed)})<br/>
+                = <strong>{formatCurrency(netProfit.netPosition)}</strong>
+              </div>
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <strong>Total Capital Deployed breakdown:</strong><br/>
+                • Initial Investment: {formatCurrency(netProfit.initialInvestment)}<br/>
+                {netProfit.cumulativeCashFlow < 0 && (
+                  <>
+                    • Out-of-Pocket Costs: {formatCurrency(Math.abs(netProfit.cumulativeCashFlow))}<br/>
+                    <span className="text-xs">(This is the negative cashflow you had to cover over {netProfit.loanTerm} years)</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -744,7 +880,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
       {/* Interest Rate Stress Tests */}
       {results.stressTests && (
         <div className="card">
-          <h2 className="text-xl font-bold mb-4">Interest Rate Stress Tests</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center">
+            Interest Rate Stress Tests
+            <InfoTooltip content="Shows how your monthly repayment and cash flow would change if interest rates increase. Use this to assess your ability to handle rate rises." />
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -781,7 +920,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
       {/* Property Value & Equity Chart */}
       {projectionChartData && (
         <div className="card">
-          <h2 className="text-xl font-bold mb-4">30-Year Property Value & Equity</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center">
+            30-Year Property Value & Equity
+            <InfoTooltip content={`Visual projection showing: Property Value (growing at ${inputData?.capitalGrowthRate || 5}%/year), Equity (Property Value - Loan), and Remaining Loan (decreasing as you pay it off). The gap between property value and loan balance is your equity.`} />
+          </h2>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={projectionChartData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -800,7 +942,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
       {/* Cash Flow Chart */}
       {cashFlowChartData && (
         <div className="card">
-          <h2 className="text-xl font-bold mb-4">Cash Flow Over Time</h2>
+          <h2 className="text-xl font-bold mb-4 flex items-center">
+            Cash Flow Over Time
+            <InfoTooltip content="Annual Cash Flow (income minus expenses each year) and Cumulative Cash Flow (running total). Negative cumulative shows total out-of-pocket costs; positive shows total profit from operations." />
+          </h2>
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={cashFlowChartData}>
               <CartesianGrid strokeDasharray="3 3" />
