@@ -36,6 +36,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         authorizationParams={{
           redirect_uri: window.location.origin + basePath,
           audience: auth0Audience,
+          scope: 'openid profile email',
         }}
         onRedirectCallback={(appState) => {
           console.log('Auth0 redirect callback:', appState);
