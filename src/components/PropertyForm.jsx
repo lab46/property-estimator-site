@@ -24,9 +24,9 @@ function PropertyForm({ onCalculate, initialData }) {
   const getInitialFormData = () => {
     const defaultData = {
       // Property details
-      propertyAddress: '',
-      purchasePrice: '',
-      deposit: '',
+      propertyAddress: '111',
+      purchasePrice: '500000',
+      deposit: '100000',
       depositPercentage: '20',
       lmi: '0',
       state: 'NSW',
@@ -37,18 +37,18 @@ function PropertyForm({ onCalculate, initialData }) {
       loanTerm: '30',
       
       // Income
-      weeklyRent: '0',
+      weeklyRent: '400',
       weeksRented: '48',
       
       // Expenses with frequencies
       propertyManagementFee: '8',
-      councilRates: '0',
+      councilRates: '2000',
       councilRatesFreq: 'yearly',
       waterRates: '800',
       waterRatesFreq: 'yearly',
-      insurance: '0',
+      insurance: '2000',
       insuranceFreq: 'yearly',
-      maintenance: '0',
+      maintenance: '2000',
       maintenanceFreq: 'yearly',
       emergencyServicesLevy: '0',
       emergencyServicesLevyFreq: 'yearly',
