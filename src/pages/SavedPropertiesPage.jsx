@@ -14,6 +14,7 @@ function SavedPropertiesPage() {
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [selectedForCompare, setSelectedForCompare] = useState([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -60,6 +61,29 @@ function SavedPropertiesPage() {
         mode: 'view' 
       } 
     });
+  };
+
+  const toggleCompareSelection = (property) => {
+    setSelectedForCompare(prev => {
+      const isSelected = prev.some(p => p.propertyId === property.propertyId);
+      if (isSelected) {
+        return prev.filter(p => p.propertyId !== property.propertyId);
+      } else {
+        if (prev.length >= 3) {
+          alert('You can compare up to 3 properties at a time');
+          return prev;
+        }
+        return [...prev, property];
+      }
+    });
+  };
+
+  const handleCompare = () => {
+    if (selectedForCompare.length < 2) {
+      alert('Please select at least 2 properties to compare');
+      return;
+    }
+    navigate('/compare', { state: { properties: selectedForCompare } });
   };
 
   const formatCurrency = (value) => {
@@ -124,12 +148,22 @@ function SavedPropertiesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Saved Properties</h1>
-        <button
-          onClick={() => navigate('/calculator')}
-          className="btn-primary"
-        >
-          + Calculate New Property
-        </button>
+        <div className="flex gap-3">
+          {selectedForCompare.length > 0 && (
+            <button
+              onClick={handleCompare}
+              className="btn-secondary"
+            >
+              Compare {selectedForCompare.length} {selectedForCompare.length === 1 ? 'Property' : 'Properties'}
+            </button>
+          )}
+          <button
+            onClick={() => navigate('/calculator')}
+            className="btn-primary"
+          >
+            + Calculate New Property
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -211,8 +245,15 @@ function SavedPropertiesPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedProperties.map((property) => (
-            <div key={property.propertyId} className="card hover:shadow-lg transition-shadow">
+            {sortedProperties.map((property) => {
+              const isSelected = selectedForCompare.some(p => p.propertyId === property.propertyId);
+              return (
+            <div 
+              key={property.propertyId} 
+              className={`card hover:shadow-lg transition-shadow relative ${
+                isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''
+              }`}
+            >
               <div className="flex justify-between items-start mb-4">
                 <h3 className="font-bold text-lg">{property.name}</h3>
                 <button
@@ -261,12 +302,20 @@ function SavedPropertiesPage() {
                 >
                   View Details
                 </button>
-                <button className="btn-secondary flex-1 text-sm">
-                  Compare
+                <button 
+                  onClick={() => toggleCompareSelection(property)}
+                  className={`flex-1 text-sm transition-colors ${
+                    isSelected 
+                      ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                      : 'btn-secondary'
+                  }`}
+                >
+                  {isSelected ? '✓ Selected' : 'Select to Compare'}
                 </button>
               </div>
             </div>
-          ))}
+              );
+            })}
           </div>
         </>
       )}
