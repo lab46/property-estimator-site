@@ -129,16 +129,23 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
     
     try {
       // Save only the input data, not calculated results
+      // Include propertyId if this is an existing property being updated
       const propertyData = {
         name: inputData?.propertyAddress || `Property - ${new Date().toLocaleDateString()}`,
         ...inputData,
+        // Explicitly preserve propertyId if it exists (for updates)
+        ...(inputData?.propertyId && { propertyId: inputData.propertyId }),
       };
       
+      console.log('Attempting to save property:', propertyData);
+      console.log('PropertyId present:', !!propertyData.propertyId, propertyData.propertyId);
       await api.saveProperty(propertyData);
+      console.log('Property saved successfully');
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      setSaveError(err.message);
+      console.error('Save property error:', err);
+      setSaveError(err.message || 'Failed to save property');
     } finally {
       setSaving(false);
     }
