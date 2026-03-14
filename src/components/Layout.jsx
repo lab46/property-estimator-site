@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 
 function Layout({ children }) {
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
+  
+  // Use the same basePath logic as main.jsx
+  const isProduction = import.meta.env.PROD;
+  const basePath = isProduction ? '/property-estimator-site' : '';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -36,7 +40,7 @@ function Layout({ children }) {
                     {user?.email}
                   </span>
                   <button
-                    onClick={() => logout({ logoutParams: { returnTo: window.location.origin + '/property-estimator-site' } })}
+                    onClick={() => logout({ logoutParams: { returnTo: window.location.origin + basePath } })}
                     className="btn-secondary text-sm"
                   >
                     Logout

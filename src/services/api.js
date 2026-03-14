@@ -99,11 +99,20 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        // If refresh fails, redirect to login
+        // Only redirect on specific authentication errors
         console.error('Token refresh failed:', refreshError);
-        if (auth0Client?.loginWithRedirect) {
-          await auth0Client.loginWithRedirect();
+        
+        // Check if this is an actual login required error
+        if (refreshError.error === 'login_required' || 
+            refreshError.error === 'consent_required' ||
+            refreshError.message?.includes('Login required')) {
+          console.log('Redirecting to login due to:', refreshError.error || refreshError.message);
+          if (auth0Client?.loginWithRedirect) {
+            await auth0Client.loginWithRedirect();
+          }
         }
+        
+        // For other errors, just reject without redirecting
         return Promise.reject(refreshError);
       }
     }

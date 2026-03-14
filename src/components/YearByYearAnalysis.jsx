@@ -55,10 +55,10 @@ function YearByYearAnalysis({ data }) {
         <h3 className="text-lg font-semibold mb-3 text-blue-900">Key Insights</h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-gray-600 flex items-center">
+            <div className="text-sm text-gray-600 flex items-center">
               Self-Sufficient Status
               <InfoTooltip content="The first year when rental income covers all expenses and loan repayments (cash flow becomes positive)." />
-            </p>
+            </div>
             {summary.selfSufficientYear ? (
               <p className="text-lg font-bold text-green-600">
                 Year {summary.selfSufficientYear}
@@ -70,28 +70,28 @@ function YearByYearAnalysis({ data }) {
             )}
           </div>
           <div>
-            <p className="text-sm text-gray-600 flex items-center">
+            <div className="text-sm text-gray-600 flex items-center">
               Final Property Value
               <InfoTooltip content="Estimated property value at the end of the loan term, after applying annual capital growth." />
-            </p>
+            </div>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(summary.finalPropertyValue)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 flex items-center">
+            <div className="text-sm text-gray-600 flex items-center">
               Final Equity (Loan Paid Off)
               <InfoTooltip content="Your total equity when the loan is fully paid off = Property Value - Remaining Loan Balance." />
-            </p>
+            </div>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(summary.finalEquity)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-600 flex items-center">
+            <div className="text-sm text-gray-600 flex items-center">
               Final Monthly Rent
               <InfoTooltip content="Estimated monthly rental income at the end of the loan term, after applying annual rental growth." />
-            </p>
+            </div>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(summary.finalMonthlyRent)}
             </p>
