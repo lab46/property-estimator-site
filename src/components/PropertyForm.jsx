@@ -24,7 +24,7 @@ function PropertyForm({ onCalculate, initialData }) {
   const getInitialFormData = () => {
     const defaultData = {
       // Property details
-      propertyAddress: '111',
+      propertyAddress: 'Property Address',
       purchasePrice: '500000',
       deposit: '100000',
       depositPercentage: '20',
@@ -251,6 +251,8 @@ function PropertyForm({ onCalculate, initialData }) {
       ),
       capitalGrowthRate: parseFloat(formData.capitalGrowthRate) || 5,
       rentalGrowthRate: parseFloat(formData.rentalGrowthRate) || 3,
+      // Preserve propertyId if editing existing property
+      ...(initialData?.propertyId && { propertyId: initialData.propertyId }),
     };
 
     onCalculate(payload);

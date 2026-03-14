@@ -11,6 +11,9 @@ function SavedPropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -37,8 +40,11 @@ function SavedPropertiesPage() {
 
     try {
       setDeleting(propertyId);
+      setDeleteSuccess(false);
       await api.deleteProperty(propertyId);
       setProperties(properties.filter(p => p.propertyId !== propertyId));
+      setDeleteSuccess(true);
+      setTimeout(() => setDeleteSuccess(false), 3000);
     } catch (err) {
       alert(`Failed to delete property: ${err.message}`);
     } finally {
@@ -64,6 +70,35 @@ function SavedPropertiesPage() {
       maximumFractionDigits: 0,
     }).format(value);
   };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const sortProperties = (props) => {
+    return [...props].sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+
+      // Convert dates to timestamps for comparison
+      if (sortBy === 'createdAt' || sortBy === 'updatedAt') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
+
+  const sortedProperties = sortProperties(properties);
 
   if (!isAuthenticated) {
     return (
@@ -103,6 +138,15 @@ function SavedPropertiesPage() {
         </div>
       )}
 
+      {deleteSuccess && (
+        <div className="card bg-green-50 border border-green-200 mb-6">
+          <div className="flex items-center">
+            <span className="text-green-600 text-xl mr-2">✓</span>
+            <p className="text-green-700 font-medium">Property deleted successfully</p>
+          </div>
+        </div>
+      )}
+
       {properties.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-gray-600 mb-4">No saved properties yet.</p>
@@ -114,8 +158,60 @@ function SavedPropertiesPage() {
           </button>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {properties.map((property) => (
+        <>
+          {/* Sort Controls */}
+          <div className="card mb-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-medium text-gray-700">Sort by:</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSortBy('createdAt')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    sortBy === 'createdAt'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Created Date
+                </button>
+                <button
+                  onClick={() => setSortBy('updatedAt')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    sortBy === 'updatedAt'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Updated Date
+                </button>
+              </div>
+              <div className="flex gap-2 ml-auto">
+                <button
+                  onClick={() => setSortOrder('asc')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    sortOrder === 'asc'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  ↑ Oldest First
+                </button>
+                <button
+                  onClick={() => setSortOrder('desc')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    sortOrder === 'desc'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  ↓ Newest First
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedProperties.map((property) => (
             <div key={property.propertyId} className="card hover:shadow-lg transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="font-bold text-lg">{property.name}</h3>
@@ -145,10 +241,17 @@ function SavedPropertiesPage() {
                   <span className="text-gray-600">Weekly Rent</span>
                   <span className="font-semibold">{formatCurrency(property.weeklyRent)}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Interest Rate</span>
+                  <span className="font-semibold">{property.interestRate}%</span>
+                </div>
               </div>
 
               <div className="text-xs text-gray-500 mb-4">
-                Saved: {new Date(property.createdAt).toLocaleDateString()}
+                <div>Created: {formatDate(property.createdAt)}</div>
+                {property.updatedAt && property.updatedAt !== property.createdAt && (
+                  <div>Updated: {formatDate(property.updatedAt)}</div>
+                )}
               </div>
 
               <div className="flex gap-2">
@@ -164,7 +267,8 @@ function SavedPropertiesPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
