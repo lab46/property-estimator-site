@@ -249,20 +249,6 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
             </div>
           </div>
 
-          {/* Total Interest */}
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
-              Total Interest ({results.loanDetails.loanTermYears}y)
-              <InfoTooltip content={`Total interest you'll pay over ${results.loanDetails.loanTermYears} years at ${formatPercent(results.loanDetails.annualInterestRate)} interest rate. Calculated as: (Monthly Payment × 12 × ${results.loanDetails.loanTermYears}) - Loan Amount.`} />
-            </div>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(results.loanDetails.totalInterest)}
-            </div>
-            <div className="text-xs text-gray-600 mt-1">
-              Over {results.loanDetails.loanTermYears} years
-            </div>
-          </div>
-
           {/* Monthly Repayment */}
           <div className="bg-white rounded-lg p-4 shadow-sm">
             <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
@@ -274,6 +260,37 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
             </div>
             <div className="text-xs text-gray-600 mt-1">
               {formatCurrency(results.loanDetails.monthlyRepayment / 4.33)}/week
+            </div>
+          </div>
+
+          {/* Monthly Cashflow */}
+          </div>
+          {results.cashFlow && (
+            <div className={`bg-white rounded-lg p-4 shadow-sm ${!results.cashFlow.isPositive ? 'ring-2 ring-red-300' : 'ring-2 ring-green-300'}`}>
+              <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+                Monthly Cash Flow
+                <InfoTooltip content={`Monthly cash flow = Monthly Rental Income - Monthly Holding Costs. ${!results.cashFlow.isPositive ? 'Negative means you need to pay out of pocket each year to cover the shortfall.' : 'Positive means the property generates more income than expenses.'}`} />
+              </div>
+              <div className={`text-2xl font-bold ${!results.cashFlow.isPositive ? 'text-red-600' : 'text-green-600'}`}>
+                {formatCurrency(results.cashFlow.cashFlow.annual / 12)}/month
+              </div>
+              <div className="text-xs text-gray-600 mt-1">
+                {cashFlowImpact.isNegative ? '⚠️ Out-of-pocket' : '✅ Income generated'} over {cashFlowImpact.loanTerm} years
+              </div>
+            </div>
+          )}
+
+          {/* Total Interest */}
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
+              Total Interest ({results.loanDetails.loanTermYears}y)
+              <InfoTooltip content={`Total interest you'll pay over ${results.loanDetails.loanTermYears} years at ${formatPercent(results.loanDetails.annualInterestRate)} interest rate. Calculated as: (Monthly Payment × 12 × ${results.loanDetails.loanTermYears}) - Loan Amount.`} />
+            </div>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(results.loanDetails.totalInterest)}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              Over {results.loanDetails.loanTermYears} years
             </div>
           </div>
 
@@ -887,7 +904,6 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
         </div>
       )}
 
-      {/* Key Milestones */}
       {/* Key Milestones */}
       {results.projection && (() => {
         return (
