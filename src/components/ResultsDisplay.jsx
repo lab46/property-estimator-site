@@ -626,6 +626,9 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
               +{formatCurrency(results.cashFlow.income.annual / (cashFlowPeriod === 'weekly' ? 52 : cashFlowPeriod === 'fortnightly' ? 26 : cashFlowPeriod === 'monthly' ? 12 : 1))}
             </span>
           </div>
+          <div className="text-xs text-gray-500 mt-2">
+            Adjusted according to the number of weeks rented per year
+          </div>
           <div className="border-t pt-3 space-y-2 text-red-600">
             <div className="flex justify-between">
               <span>Loan Repayments</span>
