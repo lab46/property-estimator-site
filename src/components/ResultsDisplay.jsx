@@ -264,7 +264,6 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
           </div>
 
           {/* Monthly Cashflow */}
-          </div>
           {results.cashFlow && (
             <div className={`bg-white rounded-lg p-4 shadow-sm ${!results.cashFlow.isPositive ? 'ring-2 ring-red-300' : 'ring-2 ring-green-300'}`}>
               <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
