@@ -24,6 +24,7 @@ export function calculate30YearProjection(params) {
     annualExpenses,
     capitalGrowthRate, // Annual property value growth %
     rentalGrowthRate,  // Annual rental income growth %
+    holdingCostGrowthRate = 3, // Annual holding cost growth % (defaults to 3%)
   } = params;
 
   const projectionYears = 30;
@@ -53,8 +54,8 @@ export function calculate30YearProjection(params) {
     // Calculate rental income with growth
     const rentThisYear = annualRent * Math.pow(1 + rentalGrowthRate / 100, year);
     
-    // Calculate expenses with inflation (assume 2.5% inflation for expenses)
-    const expensesThisYear = totalAnnualExpenses * Math.pow(1.025, year);
+    // Calculate expenses with holding cost growth rate
+    const expensesThisYear = totalAnnualExpenses * Math.pow(1 + holdingCostGrowthRate / 100, year);
     
     // Get loan details for this year
     const loanYear = amortization.find(entry => entry.year === year) || amortization[amortization.length - 1];

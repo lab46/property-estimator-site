@@ -73,7 +73,10 @@ function ComparePage() {
     { label: 'State', key: 'state', format: (v) => v || 'N/A' },
     { label: 'Purchase Price', key: 'purchasePrice', format: formatCurrency },
     { label: 'Deposit Amount', key: 'depositAmount', format: formatCurrency },
-    { label: 'Loan Amount', key: null, format: (v, prop) => formatCurrency((prop.purchasePrice || 0) - (prop.depositAmount || 0) + (prop.additionalUpfrontCosts || 0)) },
+    { label: 'Loan Amount', key: null, format: (v, prop) => {
+      const additionalCosts = (prop.lmi || 0) + (prop.legalFees || 0) + (prop.buildingInspection || 0) + (prop.otherUpfrontCosts || 0);
+      return formatCurrency((prop.purchasePrice || 0) - (prop.depositAmount || 0) + additionalCosts);
+    }},
     { label: 'Interest Rate', key: 'interestRate', format: formatPercent },
     { label: 'Loan Term (years)', key: 'loanTerm', format: (v) => v || 'N/A' },
     { label: 'Weekly Rent', key: 'weeklyRent', format: formatCurrency },
@@ -83,7 +86,10 @@ function ComparePage() {
       const weeksRented = prop.weeksRented || 52;
       return formatPercent(((prop.weeklyRent * weeksRented) / prop.purchasePrice * 100).toFixed(2));
     }},
-    { label: 'LMI / Additional Upfront', key: 'additionalUpfrontCosts', format: formatCurrency },
+    { label: 'LMI', key: 'lmi', format: formatCurrency },
+    { label: 'Legal Fees', key: 'legalFees', format: formatCurrency },
+    { label: 'Building Inspection', key: 'buildingInspection', format: formatCurrency },
+    { label: 'Other Upfront Costs', key: 'otherUpfrontCosts', format: formatCurrency },
     { label: 'First Home Buyer', key: 'isFirstHomeBuyer', format: (v) => v ? 'Yes' : 'No' },
     { label: 'Council Rates (monthly)', key: 'councilRatesMonthly', format: formatCurrency },
     { label: 'Water Rates (monthly)', key: 'waterRatesMonthly', format: formatCurrency },
@@ -107,7 +113,8 @@ function ComparePage() {
     }},
     { label: 'Monthly Cash Flow', key: null, format: (v, prop) => {
       // Calculate monthly mortgage payment
-      const principal = (prop.purchasePrice || 0) - (prop.depositAmount || 0) + (prop.additionalUpfrontCosts || 0);
+      const additionalCosts = (prop.lmi || 0) + (prop.legalFees || 0) + (prop.buildingInspection || 0) + (prop.otherUpfrontCosts || 0);
+      const principal = (prop.purchasePrice || 0) - (prop.depositAmount || 0) + additionalCosts;
       const monthlyRate = (prop.interestRate || 0) / 100 / 12;
       const numPayments = (prop.loanTerm || 30) * 12;
       const monthlyMortgage = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
@@ -132,6 +139,7 @@ function ComparePage() {
     }},
     { label: 'Capital Growth Rate', key: 'capitalGrowthRate', format: formatPercent },
     { label: 'Rental Growth Rate', key: 'rentalGrowthRate', format: formatPercent },
+    { label: 'Holding Cost Growth Rate', key: 'holdingCostGrowthRate', format: formatPercent },
   ];
 
   // Helper function to get numeric value for comparison
@@ -158,7 +166,8 @@ function ComparePage() {
              (property.wealthFeeMonthly || 0);
     }
     if (row.label === 'Monthly Cash Flow') {
-      const principal = (property.purchasePrice || 0) - (property.depositAmount || 0) + (property.additionalUpfrontCosts || 0);
+      const additionalCosts = (property.lmi || 0) + (property.legalFees || 0) + (property.buildingInspection || 0) + (property.otherUpfrontCosts || 0);
+      const principal = (property.purchasePrice || 0) - (property.depositAmount || 0) + additionalCosts;
       const monthlyRate = (property.interestRate || 0) / 100 / 12;
       const numPayments = (property.loanTerm || 30) * 12;
       const monthlyMortgage = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);

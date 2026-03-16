@@ -349,9 +349,9 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
               (results.cashFlow.costs.breakdown.wealthFee || 0) +
               (results.cashFlow.costs.breakdown.strata || 0);
             
-            // Project expenses with growth (assuming same as rental growth if available)
+            // Project expenses with holding cost growth rate
             let totalExpenses = 0;
-            const expenseGrowthRate = inputData?.rentalGrowthRate || 3;
+            const expenseGrowthRate = inputData?.holdingCostGrowthRate || inputData?.rentalGrowthRate || 3;
             for (let year = 1; year <= loanTerm; year++) {
               totalExpenses += annualExpenses * Math.pow(1 + expenseGrowthRate / 100, year - 1);
             }
@@ -362,13 +362,13 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <div className="text-xs text-gray-500 uppercase tracking-wide mb-1 flex items-center">
                   Total Holding Costs
-                  <InfoTooltip content={`Total cost to hold the property over ${loanTerm} years. Includes: Loan Repayments (${formatCurrency(totalLoanRepayments)}) + All Expenses growing at ${expenseGrowthRate}% per year (property management, rates, insurance, maintenance, etc.). This is what you'll pay out over the investment period.`} />
+                  <InfoTooltip content={`Total cost to hold the property over ${loanTerm} years. Includes: Loan Repayments (${formatCurrency(totalLoanRepayments)}) + All Expenses growing at ${expenseGrowthRate}% per year (holding cost growth rate). This is what you'll pay out over the investment period.`} />
                 </div>
                 <div className="text-2xl font-bold text-red-600">
                   {formatCurrency(totalHoldingCosts)}
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
-                  Total Repayments + Expenses ({loanTerm}y, assuming expense growth same as rental growth, if available)
+                  Total Repayments + Expenses ({loanTerm}y, with {expenseGrowthRate}% holding cost growth)
                 </div>
               </div>
             );
@@ -433,10 +433,10 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
               <div>
                 <div className="font-semibold text-gray-900 flex items-center">
                   Growth Assumptions
-                  <InfoTooltip content="Annual growth rates used in projections. Capital growth affects property value, rental growth affects income over time." />
+                  <InfoTooltip content="Annual growth rates used in projections. Capital growth affects property value, rental growth affects income, and holding cost growth affects expenses over time." />
                 </div>
                 <div className="text-gray-700">
-                  Capital: {inputData?.capitalGrowthRate || 5}%/yr • Rental: {inputData?.rentalGrowthRate || 3}%/yr
+                  Capital: {inputData?.capitalGrowthRate || 5}%/yr • Rental: {inputData?.rentalGrowthRate || 3}%/yr • Holding Costs: {inputData?.holdingCostGrowthRate || 3}%/yr
                 </div>
               </div>
             </div>
@@ -466,7 +466,7 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
         </div>
 
         <div className="card bg-green-50">
-          <div className="text-sm text-gray-600 mb-1">Stamp Duty</div>
+          <div className="text-sm text-gray-600 mb-1">Stamp Duty (approx.)</div>
           <div className="text-2xl font-bold text-green-600">
             {formatCurrency(results.stampDuty?.total || 0)}
           </div>
@@ -475,6 +475,7 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
               {results.stampDuty.concessionType} - Saved {formatCurrency(results.stampDuty.savingsAmount)}
             </div>
           )}
+          <div className="text-xs text-gray-500 mt-1">⚠️ Estimate only - verify with state revenue office</div>
         </div>
 
         <div className="card bg-blue-50">
@@ -508,8 +509,8 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600 flex items-center">
-              Stamp Duty
-              <InfoTooltip content={`Government tax on property transfer. ${results.stampDuty?.concessionApplied ? `You received a ${results.stampDuty.concessionType} saving ${formatCurrency(results.stampDuty.savingsAmount)}.` : 'Varies by state and property value.'}`} />
+              Stamp Duty (approx.)
+              <InfoTooltip content={`Approximate government tax on property transfer. ${results.stampDuty?.concessionApplied ? `You received a ${results.stampDuty.concessionType} saving ${formatCurrency(results.stampDuty.savingsAmount)}.` : ''} ⚠️ This is an estimate only - actual stamp duty may vary. Verify with your state revenue office.`} />
             </span>
             <span className="font-semibold">{formatCurrency(results.stampDuty?.total || 0)}</span>
           </div>

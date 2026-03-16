@@ -29,6 +29,9 @@ function PropertyForm({ onCalculate, initialData }) {
       deposit: '100000',
       depositPercentage: '20',
       lmi: '0',
+      legalFees: '0',
+      buildingInspection: '0',
+      otherUpfrontCosts: '0',
       state: 'NSW',
       isFirstHome: false,
       
@@ -62,6 +65,7 @@ function PropertyForm({ onCalculate, initialData }) {
       // Growth assumptions
       capitalGrowthRate: '5',
       rentalGrowthRate: '3',
+      holdingCostGrowthRate: '3',
       
       // Options
       includeStressTests: false,
@@ -90,6 +94,9 @@ function PropertyForm({ onCalculate, initialData }) {
       deposit: deposit,
       depositPercentage: depositPercentage,
       lmi: initialData.lmi || '0',
+      legalFees: initialData.legalFees || '0',
+      buildingInspection: initialData.buildingInspection || '0',
+      otherUpfrontCosts: initialData.otherUpfrontCosts || '0',
       // Convert monthly expenses back to annual with yearly frequency
       councilRates: initialData.councilRatesMonthly ? (initialData.councilRatesMonthly * 12).toFixed(0) : initialData.councilRates || '0',
       councilRatesFreq: 'yearly',
@@ -209,7 +216,10 @@ function PropertyForm({ onCalculate, initialData }) {
       propertyAddress: formData.propertyAddress,
       purchasePrice: parseFloat(formData.purchasePrice),
       depositAmount: parseFloat(formData.deposit),
-      additionalUpfrontCosts: parseFloat(formData.lmi) || 0,
+      lmi: parseFloat(formData.lmi) || 0,
+      legalFees: parseFloat(formData.legalFees) || 0,
+      buildingInspection: parseFloat(formData.buildingInspection) || 0,
+      otherUpfrontCosts: parseFloat(formData.otherUpfrontCosts) || 0,
       interestRate: parseFloat(formData.interestRate),
       loanTerm: parseInt(formData.loanTerm),
       state: formData.state,
@@ -251,6 +261,7 @@ function PropertyForm({ onCalculate, initialData }) {
       ),
       capitalGrowthRate: parseFloat(formData.capitalGrowthRate) || 5,
       rentalGrowthRate: parseFloat(formData.rentalGrowthRate) || 3,
+      holdingCostGrowthRate: parseFloat(formData.holdingCostGrowthRate) || 3,
       // Preserve propertyId if editing existing property
       ...(initialData?.propertyId && { propertyId: initialData.propertyId }),
     };
@@ -355,6 +366,85 @@ function PropertyForm({ onCalculate, initialData }) {
               {errors.lmi && (
                 <p className="mt-1 text-sm text-red-600">{errors.lmi}</p>
               )}
+            </div>
+          </div>
+
+          {/* Additional Upfront Costs */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+            <div className="flex items-start gap-2">
+              <span className="text-blue-600 text-xl">ℹ️</span>
+              <div className="text-sm text-blue-900">
+                <p className="font-semibold mb-1">About Stamp Duty & Upfront Costs</p>
+                <p className="text-blue-800">Stamp duty shown in results is <strong>approximate only</strong>. Actual stamp duty calculations vary by state and may differ from bank calculations. Please verify with your state's revenue office:</p>
+                <ul className="mt-2 space-y-1 text-xs text-blue-700">
+                  <li>• NSW: <a href="https://www.revenue.nsw.gov.au/taxes-duties-levies-royalties/transfer-duty" target="_blank" rel="noopener" className="underline">Revenue NSW</a></li>
+                  <li>• VIC: <a href="https://www.sro.vic.gov.au/buying-property/land-transfer-stamp-duty" target="_blank" rel="noopener" className="underline">State Revenue Office Victoria</a></li>
+                  <li>• QLD: <a href="https://www.qro.qld.gov.au/duties/transfer-duty/" target="_blank" rel="noopener" className="underline">QLD Revenue Office</a></li>
+                  <li>• SA: <a href="https://revenuesa.sa.gov.au/stamp-duty/calculate-stamp-duty" target="_blank" rel="noopener" className="underline">SA Revenue Office</a></li>
+                  <li>• Other states: Check your state revenue office website</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="border-t border-blue-200 pt-4">
+              <h3 className="font-semibold text-gray-900 mb-3">Additional Upfront Costs (Optional)</h3>
+              <p className="text-xs text-gray-600 mb-4">These costs are not included in stamp duty but add to your total upfront investment:</p>
+              
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Legal Fees
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      name="legalFees"
+                      value={formData.legalFees}
+                      onChange={handleChange}
+                      className="input-field pl-8"
+                      placeholder="1500"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Conveyancing, solicitor fees</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Building Inspection
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      name="buildingInspection"
+                      value={formData.buildingInspection}
+                      onChange={handleChange}
+                      className="input-field pl-8"
+                      placeholder="500"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Pre-purchase inspection</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Other Upfront Costs
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      name="otherUpfrontCosts"
+                      value={formData.otherUpfrontCosts}
+                      onChange={handleChange}
+                      className="input-field pl-8"
+                      placeholder="1000"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Pest inspection, bank fees, etc.</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -819,6 +909,25 @@ function PropertyForm({ onCalculate, initialData }) {
               />
               <span className="absolute right-3 top-2 text-gray-500">%</span>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Holding Cost Growth Rate (% p.a.)
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                step="0.1"
+                name="holdingCostGrowthRate"
+                value={formData.holdingCostGrowthRate}
+                onChange={handleChange}
+                className="input-field pr-8"
+                placeholder="3"
+              />
+              <span className="absolute right-3 top-2 text-gray-500">%</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Annual increase in expenses (rates, insurance, maintenance, etc.)</p>
           </div>
         </div>
       </div>

@@ -23,7 +23,10 @@ export function calculatePropertyInvestment(propertyData) {
       purchasePrice,
       state,
       isFirstHomeBuyer = false,
-      additionalUpfrontCosts = 0,
+      lmi = 0,
+      legalFees = 0,
+      buildingInspection = 0,
+      otherUpfrontCosts = 0,
       
       // Loan Details
       depositAmount,
@@ -48,6 +51,7 @@ export function calculatePropertyInvestment(propertyData) {
       // Growth Assumptions
       capitalGrowthRate = 5, // % per year
       rentalGrowthRate = 3,   // % per year
+      holdingCostGrowthRate = 3, // % per year (defaults to same as rental growth)
     } = propertyData;
 
     // Validate required fields
@@ -57,6 +61,9 @@ export function calculatePropertyInvestment(propertyData) {
 
     // Calculate stamp duty
     const stampDuty = calculateStampDuty(purchasePrice, state, isFirstHomeBuyer);
+
+    // Calculate total additional upfront costs
+    const additionalUpfrontCosts = lmi + legalFees + buildingInspection + otherUpfrontCosts;
 
     // Calculate loan details
     const loanAmount = purchasePrice - depositAmount;
@@ -105,6 +112,7 @@ export function calculatePropertyInvestment(propertyData) {
       annualExpenses,
       capitalGrowthRate,
       rentalGrowthRate,
+      holdingCostGrowthRate,
     });
 
     // Calculate investment metrics
