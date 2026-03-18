@@ -29,9 +29,9 @@ function PropertyForm({ onCalculate, initialData }) {
       deposit: '100000',
       depositPercentage: '20',
       lmi: '0',
-      legalFees: '0',
-      buildingInspection: '0',
-      otherUpfrontCosts: '0',
+      legalFees: '2000',
+      buildingInspection: '880',
+      otherUpfrontCosts: '1000',
       state: 'NSW',
       isFirstHome: false,
       
@@ -262,6 +262,7 @@ function PropertyForm({ onCalculate, initialData }) {
       capitalGrowthRate: parseFloat(formData.capitalGrowthRate) || 5,
       rentalGrowthRate: parseFloat(formData.rentalGrowthRate) || 3,
       holdingCostGrowthRate: parseFloat(formData.holdingCostGrowthRate) || 3,
+      includeStressTests: formData.includeStressTests,
       // Preserve propertyId if editing existing property
       ...(initialData?.propertyId && { propertyId: initialData.propertyId }),
     };

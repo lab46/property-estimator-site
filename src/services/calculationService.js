@@ -52,6 +52,9 @@ export function calculatePropertyInvestment(propertyData) {
       capitalGrowthRate = 5, // % per year
       rentalGrowthRate = 3,   // % per year
       holdingCostGrowthRate = 3, // % per year (defaults to same as rental growth)
+      
+      // Options
+      includeStressTests = false,
     } = propertyData;
 
     // Validate required fields
@@ -138,6 +141,25 @@ export function calculatePropertyInvestment(propertyData) {
       rentalGrowthRate,
     });
 
+    // Calculate stress tests if requested
+    let stressTests = null;
+    if (includeStressTests) {
+      const stressTestRates = [0.25, 0.5, 1.0]; // Rate increases to test
+      stressTests = stressTestRates.map(increase => {
+        const newRate = interestRate + increase;
+        const stressLoanDetails = calculateLoanRepayments(loanAmount, newRate, loanTerm);
+        const stressCashFlow = calculateCashFlow(annualRent, stressLoanDetails.annualRepayment, annualExpenses);
+        
+        return {
+          rateIncrease: increase,
+          newRate,
+          monthlyRepayment: stressLoanDetails.monthlyRepayment,
+          annualRepayment: stressLoanDetails.annualRepayment,
+          annualCashFlow: stressCashFlow.cashFlow.annual,
+        };
+      });
+    }
+
     // Return comprehensive results
     return {
       // Summary
@@ -176,6 +198,9 @@ export function calculatePropertyInvestment(propertyData) {
 
       // Year-by-Year Details
       yearByYear,
+
+      // Stress Tests (if requested)
+      ...(stressTests && { stressTests }),
 
       // Input Parameters
       inputs: propertyData,

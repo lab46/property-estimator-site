@@ -700,12 +700,15 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">Average Annual Cost</div>
+                    <div className="text-sm text-gray-600 mb-1 flex items-center">
+                      Average Annual Cost
+                      <InfoTooltip content={`This is the average across all ${cashFlowImpact.loanTerm} years, accounting for rental growth and expense increases each year. Year 1 cash flow is ${formatCurrency(results.cashFlow.cashFlow.annual)}/year, but later years differ due to growth rates.`} />
+                    </div>
                     <div className="text-2xl font-bold text-red-600">
                       {formatCurrency(Math.abs(cashFlowImpact.totalCashFlow) / cashFlowImpact.loanTerm)}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
-                      (~{formatCurrency(Math.abs(cashFlowImpact.totalCashFlow) / cashFlowImpact.loanTerm / 12)}/month)
+                      (~{formatCurrency(Math.abs(cashFlowImpact.totalCashFlow) / cashFlowImpact.loanTerm / 12)}/month avg)
                     </div>
                   </div>
                 </div>
@@ -724,12 +727,15 @@ function ResultsDisplay({ results, onReset, onEdit, inputData }) {
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-600 mb-1">Average Annual Income</div>
+                    <div className="text-sm text-gray-600 mb-1 flex items-center">
+                      Average Annual Income
+                      <InfoTooltip content={`This is the average across all ${cashFlowImpact.loanTerm} years, accounting for rental growth and expense increases each year. Year 1 cash flow is ${formatCurrency(results.cashFlow.cashFlow.annual)}/year, but later years differ due to growth rates.`} />
+                    </div>
                     <div className="text-2xl font-bold text-green-600">
                       {formatCurrency(cashFlowImpact.totalCashFlow / cashFlowImpact.loanTerm)}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
-                      (~{formatCurrency(cashFlowImpact.totalCashFlow / cashFlowImpact.loanTerm / 12)}/month)
+                      (~{formatCurrency(cashFlowImpact.totalCashFlow / cashFlowImpact.loanTerm / 12)}/month avg)
                     </div>
                   </div>
                 </div>
